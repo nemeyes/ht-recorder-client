@@ -1,0 +1,1652 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+<AllRequestResponseList schemaLocation="RecordingService.xsd">
+
+
+<!-- ************* command xml, streaming data의 패킷 형식 ***************** -->
+
+<!--
+packet = message type (4bytes) + data size (4bytes) + data (binary or xml)
+
+message type에 따른 data 영역 구조
+SEND_FRAME = 1, FRAME_HEADER + binary
+SEND_VIDEO_CODEC = 2, VIDEO_CODEC
+SEND_AUDIO_CODEC = 3, AUDIO_CODEC
+SEND_XML = 4, xml
+SEND_KEEP_ALIVE = 5, no data
+SEND_BINARY = 6, binary (ex. clip viewer binary, client로부터 양방향 오디오 데이터 받을 때)
+SEND_END_OF_BINARY = 7, no data
+SEND_END_OF_EXPORT = 8, no data
+-->
+
+<!--
+typedef enum
+{
+	VIDEO_UNKNOWN	= 0,
+	VIDEO_MJPEG,
+	VIDEO_MPEG4,
+	VIDEO_MPEG4SP, // simple profile
+	VIDEO_MPEG4ASP, // advanced simple profile
+	VIDEO_H264,
+	VIDEO_H264BP, // base profile
+	VIDEO_H264MP, // main profile
+	VIDEO_H264HP // high profile
+} VIDEO_TYPE;
+
+typedef enum
+{
+	AUDIO_UNKNOWN	= 0,
+	AUDIO_PCM8,
+	AUDIO_PCM16,
+	AUDIO_G711U,
+	AUDIO_G711A,
+	AUDIO_G726,
+	AUDIO_AAC
+} AUDIO_TYPE;
+
+비디오 코덱 구조체에 extra_data가 있는 경우(extra_size > 0) 코덱 초기화 사용하면 됨.
+typedef struct
+{
+	VIDEO_TYPE	type;
+	UINT32		channel;
+	UINT32		stream;
+	UINT32		width;
+	UINT32		height;
+	UINT32		header1_position; // 고려하지 않아도 됨
+	UINT32		header1_size; // 고려하지 않아도 됨
+	UINT32		header2_position; // 고려하지 않아도 됨
+	UINT32		header2_size; // 고려하지 않아도 됨
+	UINT32		extra_size;
+	char		extra_data[max_video_extra_size]; // MPEG-4 VOL Header, H.264 SPS/PPS Header data(comma가 구분자)
+} VIDEO_CODEC;
+
+오디오 코덱 구조체에 extra_data가 있는 경우(extra_size > 0) 코덱 초기화 사용하면 됨.
+typedef struct
+{
+	AUDIO_TYPE	type;
+	UINT32		channel;
+	UINT32		stream;
+	UINT32		bit_rate; // bps
+	UINT32		sample_rate; // kHz
+	UINT32		extra_size;
+	char		extra_data[max_audio_extra_size]; // AAC Decoding Initial Block
+} AUDIO_CODEC;
+
+typedef struct
+{
+	HEADER_TYPE	header_type; // 프레임 헤더의 경우 항상 5
+	UINT32		channel; // 0-based channel idx
+	UINT32		stream; // 0-based stream idx
+	UINT32		frame_size; // frame data size
+	UINT32		watermark_size; // watermark size
+	FRAME_TYPE	type; // frame type
+	INT32		keyframe; // MJPEG인 경우 항상 1
+	UINT32		date; // 연-월-일, ex. 2012년 5월 20일 = 20120520
+	UINT32		time; // 시-분-초-밀리초, ex. 13시 10분 59초 123밀리초 = 131059123
+	UINT64	    	block_header_position; // 고려하지 않아도 됨
+	UINT64		keyframe_position; // 고려하지 않아도 됨
+	UINT64		next_frame_position; // 고려하지 않아도 됨
+} FRAME_HEADER;
+
+typedef enum
+{
+	FRAME_UNKNOWN = 0x00000000,
+	FRAME_VIDEO = 0x00000001,
+	FRAME_AUDIO = 0x00000002,
+	FRAME_META_ALARMIN = 0x00000040, // 하이트론 장치의 alarm-in 이벤트 
+	FRAME_META_TRIGGER = 0x00000080, // 하이트론 장치의 manual trigger 이벤트 
+	FRAME_META_MOTION = 0x00000100, // 하이트론 장치의 motion 이벤트
+} FRAME_TYPE;
+
+typedef struct
+{
+	UINT32 alarm_number; // 1-based
+} FRAME_ALARMIN;
+
+typedef struct
+{
+	UINT32 trigger_number; // 1-based
+} FRAME_TRIGGER;
+
+// 좌측상단이 (0,0), 비디오 해상도와 같은 좌표계
+typedef struct
+{
+	UINT32 region_number; // 1-based
+	UINT32 left, right, top, bottom;
+	UINT32 sensitivity; // 1 ~ 100
+	UINT32 threshold; // 1 ~ 100
+	UINT32 activity; // 1 ~ 100, activity값이 threshold보다 크면 모션이 발생한 것임
+} FRAME_MOTION;
+-->
+
+
+
+<!-- *************************** 로그인, 계정 관리 ************************* -->
+
+<!--
+request <-> reponses pair로 구성된 command xml은 요청 할 때 req_id 속성값을 줘야함.
+서버에서 응답에 다시 붙여서 보내줌.
+서버에서 일방적으로 나가는 notification xml에는 req_id 속성이 없음.
+-->
+
+<!--
+서버와 control session을 연결하는 command. 모든 xml command와 서버의 notification은 이 session을 사용함.
+
+pwd: md5 encoding.
+setup: 서버의 설정을 변경할 수 있는 계정으로 로그인 하는 경우 1. (일부 setup command들은 setup 계정으로만 사용 가능)
+       서버에서 setup 계정은 한 명만 로그인 가능하고 이미 setup 계정이 로그인 된 상태에서 새 setup 계정이 로그인 요청하는 경우 기존 session이 끊어짐.
+ver: 레코딩 파일 포맷 버전. (최신 버전 10300 사용)
+index_ver: 레코딩 인덱스 버전. (최신 버전 2 사용)
+-->
+<GetClientIDReq req_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548' id='admin' pwd='21232f297a57a5a743894a0e4a801fc3' setup='1' ver='10300' index_ver='2'>
+</GetClientIDReq>
+
+<GetClientIDRes req_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>
+  <NRSError>UnsupportedVersion</NRSError>
+  <ClientID>1</ClientID> <!-- session 연결에 성공한 경우 client에 부여되는 ID -->
+  <ServerVersion>10300</ServerVersion> <!-- 서버의 레코딩 파일 포맷 버전 -->
+  <IndexVersion>2</IndexVersion> <!-- 서버의 레코딩 인덱스 버전 -->
+</GetClientIDRes>
+
+
+<!--
+control session에 1분 동안 입력이 없으면 timeout되므로 keep alive를 유지하기 위한 커맨드.
+-->
+<KeepAliveReq/>
+<KeepAliveRes/>
+
+
+<!--
+client side에서 명시적으로 control session을 종료하는 command.
+-->
+<DisconnectReq/>
+<DisconnectRes/>
+
+
+<!--
+서버에 저장된 계정 정보를 얻는 command.
+-->
+<GetAllAccountReq/>
+
+<GetAllAccountRes>
+  <Account id='admin' pwd='21232f297a57a5a743894a0e4a801fc3'/> <!-- 암호는 md5 encoding -->
+  <Account id='heonjushin' pwd='21232f297a57a5a743894a0e4a801fc3'/>
+</GetAllAccountRes>
+
+
+<!--
+계정을 추가 하는 setup command.
+-->
+<AddAccountReq>
+  <Account id='heonjushin' pwd='21232f297a57a5a743894a0e4a801fc3'/>
+</AddAccountReq>
+
+<AddAccountRes>
+  <NRSError>OK</NRSError>
+</AddAccountRes>
+
+
+<!--
+계정을 삭제 하는 setup command.
+-->
+<DeleteAccountReq>
+  <Account id='heonjushin' pwd='21232f297a57a5a743894a0e4a801fc3'/>
+</DeleteAccountReq>
+
+<DeleteAccountRes>
+  <NRSError>OK</NRSError>
+</DeleteAccountRes>
+
+
+<!--
+기존 계정의 password를 변경하는 setup command.
+-->
+<UpdateAccountReq>
+  <Account id='heonjushin' pwd='21232f297a57a5a743894a0e4a801fc3' new_pwd='21232f297a57a5a743894a0e4a801fc3'/>
+</UpdateAccountReq>
+
+<UpdateAccountRes>
+  <NRSError>OK</NRSError>
+</UpdateAccountRes>
+
+
+
+<!-- ***************************** 장치 정보 관리 ************************** -->
+
+<!--
+서버에 장치를 추가,갱신하는 setup command.
+<Device> element는 여러 개 추가 가능.
+-->
+<UpdateStreamInfoReq>
+  <Device type="HitronCamera"> <!-- "HitronCamera", "OnvifCamera", "HitronNVR" -->
+    <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID> <!-- key value -->
+    <MAC>0007D800F314</MAC>
+    <Profile>/1/stream0</Profile> <!-- hitron profile name or onvif profile name -->
+    <!-- 
+	 장치가 "HitronCamera" or "HitronNVR"일 경우: "SModel", "SModel2", "HModel", "SNModel"
+	 장치가 "OnvifCamera"일 경우: "ONVIF"
+    -->
+    <ModelType>EModel</ModelType> 
+    <Model>모델이름</Model>
+    <Address>192.168.91.210</Address>
+    <URL>rtsp://192.168.91.210/1/stream0</URL>
+    <RTSPPort>554</RTSPPort>
+    <HTTPPort>80</HTTPPort>
+    <HTTPSPort>443</HTTPSPort>
+    <SSL>1</SSL> <!-- SSL사용 여부: 1 or 0 -->
+    <!--
+	1. RTP over UDP
+	2. RTP over RTSP (TCP)
+	3. RTP over RTSP over HTTP (TCP)
+	4. RTP Multicast
+    -->
+    <ConnectType>3</ConnectType>
+    <Login id="admin" pwd="admin" /> <!-- 장치에 연결할 때 사용하는 계정 정보 -->
+    <ONVIF> <!-- 장치가 "OnvifCamera" 일 때만 사용하는 추가 정보 -->
+      <ServiceUri>http://192.168.91.210/onvif/device_service</ServiceUri> <!-- onvif service uri -->
+      <PTZ>
+	<PTZUri>http://192.168.91.210/onvif/device_service</PTZUri> <!-- onvif PTZ service uri -->
+	<Token /> <!-- PTZ token name -->
+      </PTZ>
+    </ONVIF>
+  </Device>
+</UpdateStreamInfoReq>
+
+<UpdateStreamInfoRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>AlreadyRecording</NRSError>
+</UpdateStreamInfoRes>
+
+
+<!-- 
+장치 정보를 삭제하는 setup command.
+-->
+<DeleteStreamInfoReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</DeleteStreamInfoReq>
+
+<DeleteStreamInfoRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>AlreadyRecording</NRSError>
+</DeleteStreamInfoRes>
+
+
+<!--
+서버에 등록된 모든 장치 정보를 얻는 command.
+-->
+<GetAllStreamInfoReq/>
+
+<GetAllStreamInfoRes>
+  <Device type="HitronCamera">
+    <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+    <MAC>0007D800F314</MAC>
+    <Profile>/1/stream0</Profile>
+    <ModelType>EModel</ModelType>
+    <Model>모델이름</Model>
+    <Address>192.168.91.210</Address>
+    <URL>rtsp://192.168.91.210/1/stream0</URL>
+    <RTSPPort>554</RTSPPort>
+    <HTTPPort>80</HTTPPort>
+    <HTTPSPort>443</HTTPSPort>
+    <SSL>1</SSL>
+    <ConnectType>3</ConnectType>
+    <Login id="admin" pwd="admin" />
+    <ONVIF>
+      <ServiceUri>http://192.168.91.210/onvif/device_service</ServiceUri>
+      <PTZ>
+	<Token />
+      </PTZ>
+    </ONVIF>
+  </Device>
+</GetAllStreamInfoRes>
+
+
+<!-- 
+서버와 장치 연결을 강제로 끊는 setup command.
+서버에서 해당 장치의 릴레이, 레코딩, 플레이백도 모두 종료시키고 연결을 끊는 작업은 비동기로 처리된다.
+즉, 장치 연결이 완전히 끊어졌는지 확인하는 것은 이 command의 응답이 아니라 <IsKilledStreamReq>를 이용한 polling방식으로 확인해야함.
+이 command의 응답은 장치와의 연결을 끊는 비동기 작업이 시작 되었는지의 유무를 나타냄.
+-->
+<KillStreamReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</KillStreamReq>
+
+<KillStreamRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>Fail</NRSError>
+</KillStreamRes>
+
+<KillStreamAllReq/>
+
+<KillStreamAllRes>
+  <NRSError>OK</NRSError>
+</KillStreamAllRes>
+
+
+<!-- 
+서버와 장치 연결이 끊어졌는지 확인 하는 command.
+-->
+<IsKilledStreamReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</IsKilledStreamReq>
+
+<IsKilledStreamRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>AlreadyUsing</NRSError>
+</IsKilledStreamRes>
+
+
+
+<!-- **************************** 레코딩 설정 ************************** -->
+
+<!--
+장치별로 레코딩 스케줄을 추가,변경하는 setup command.
+<RecordingSchedule> element는 여러 개 추가 가능.
+-->
+<UpdateRecordingScheduleReq>
+  <RecordingSchedule stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>
+    <Pre>0</Pre> <!-- 프리 레코딩 시간(초) -->
+    <Post>10</Post> <!-- 포스트 레코딩 시간(초) -->
+    <Schedule>
+      <Time type="normal"> <!-- 평일 레코딩 스케줄 -->
+	<!--
+	    id: 고유 아이디, optional
+	    adv : 스케쥴 고급 기능 사용 유무, optional
+	    audio : 오디오 저장 유무
+	    type : 0-NONE 
+	           1-항상 레코딩
+		   2-이벤트 레코딩
+		   3-ADAPTIVE 레코딩 (이벤트 발생 시에는 pre, post 시간을 포함하여 모든 프레임을 저장하고 그 외에는 키프레임만 저장)
+	    sun ~ sat : 24시간에 대해 각각 시간별로 레코딩 유무를 나타내는 24bit bitflag (32bit integer)
+	-->
+	<Sch audio="1" type="1" sun="0" mon="0" tue="0" web="0" thu="0" fri="0" sat="0" ></Sch>
+	<Sch audio="1" type="1" sun="0" mon="0" tue="0" web="0" thu="0" fri="0" sat="0" ></Sch>
+	<Sch audio="1" type="1" sun="0" mon="0" tue="0" web="0" thu="0" fri="0" sat="0" ></Sch>
+      </Time>
+      <Time type="special" enable="0"> <!-- special day 레코딩 설정(매년 기준) -->
+	<Sch month="1" day="1"> <!-- special day로 설정할 월,일을 설정 -->
+	  <!--
+	      Time 엘리멘트는 24개로 24시를 나타냄
+	      t : 0시 ~ 23시 
+	      type : 0, 1, 2, 3 (위와 동일)
+	  -->
+	  <Time t="0" type="1" audio="0" />
+	  <Time t="1" type="1" audio="0" />
+	</Sch>
+      </Time>
+    </Schedule>
+  </RecordingSchedule>
+</UpdateRecordingScheduleReq>
+
+<UpdateRecordingScheduleRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>AlreadyRecording</NRSError>
+</UpdateRecordingScheduleRes>
+
+
+<!-- 
+레코딩 스케줄을 얻는 command.
+<StreamID> element는 여러 개 가능하고 하나도 없이 요청하는 경우는 전체 장치의 레코딩 스케줄을 반환함.
+-->
+<GetRecordingScheduleReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+</GetRecordingScheduleReq>
+
+<GetRecordingScheduleRes>
+  <RecordingSchedule stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>
+    <Pre>0</Pre>
+    <Post>10</Post>
+    <Schedule>
+      <Time type="normal">
+	<Sch audio="1" type="1" sun="0" mon="0" tue="0" web="0" thu="0" fri="0" sat="0" ></Sch>
+	<Sch audio="1" type="1" sun="0" mon="0" tue="0" web="0" thu="0" fri="0" sat="0" ></Sch>
+	<Sch audio="1" type="1" sun="0" mon="0" tue="0" web="0" thu="0" fri="0" sat="0" ></Sch>
+      </Time>
+      <Time type="special">
+	<Sch month="1" day="1">
+	  <Time t="0" type="1" audio="0" />
+	  <Time t="1" type="1" audio="0" />
+	</Sch>
+      </Time>
+    </Schedule>
+  </RecordingSchedule>
+</GetRecordingScheduleRes>
+
+
+<!--
+레코딩 overwriting을 사용할 것인지 설정하는 setup command.
+-->
+<RecordingOverwriteReq onoff="1">
+</RecordingOverwriteReq>
+
+<RecordingOverwriteRes>
+  <NRSError>OK</NRSError>
+</RecordingOverwriteRes>
+
+
+<!-- 
+레코딩 보존기한 설정하는 setup command.
+보존기한 설정이 enable되어 있으면 보존기한이 만료된 레코딩 데이터는 자동 삭제됨.
+-->
+<UpdateRetentionTimeReq enable='1'>
+  <Year>1</Year>
+  <Month>2</Month>
+  <Week>1</Week>
+  <Day>30</Day>
+</UpdateRetentionTimeReq>
+
+<UpdateRetentionTimeRes>
+  <NRSError>OK</NRSError>
+</UpdateRetentionTimeRes>
+
+
+<!--
+서버에서 사용 가능한 레코딩 스토리지 정보를 얻는 command.
+-->
+<GetDiskInfoReq>
+</GetDiskInfoReq>
+
+<GetDiskInfoRes>
+  <Drive>
+    <RootPath>C:\</RootPath>
+    <Name>XP Pro (C:\)</Name>
+    <VolumeSerial>12345678</VolumeSerial> <!-- drive letter가 아니라 volume serial값이 key로 사용됨 -->
+    <Total>2500</Total> <!-- 스토리지 전체 공간 (byte) -->
+    <Reserved>2405</Reserved> <!-- 실제 레코딩에 사용하기로 할당한 공간 (byte) -->
+    <Usage>1201</Usage> <!-- reserved 공간 중에서 실제 레코딩 데이터가 사용한 공간 (byte) -->
+    <TotalUsage>2400</TotalUsage> <!-- 현재 사용된 전체 공간 (byte) : 레코딩 데이터 + unknown(스토리지에 레코딩 데이터 외에 다른 데이터들이 있을 수도 있으므로) -->
+  </Drive>
+  <Drive>
+    <RootPath>D:\</RootPath>
+    <Name>Backup (D:\)</Name>
+    <VolumeSerial>12345678</VolumeSerial>
+    <Total>2500</Total> 
+    <Reserved>0</Reserved>
+    <Usage>0</Usage>
+    <TotalUsage>1201</TotalUsage>
+  </Drive>
+</GetDiskInfoRes>
+
+
+<!--
+스토리지 별로 레코딩에 사용할 공간을 할당하는 setup command.
+-->
+<ReserveDiskSizeReq>
+  <Drive volume_serial="12345678">
+    <Size>2500</Size> <!-- byte -->
+  </Drive>
+  <Drive volume_serial="569899">
+    <Size>2500</Size> <!-- byte -->
+  </Drive>
+</ReserveDiskSizeReq>
+
+<ReserveDiskSizeRes>
+  <NRSError volume_serial="12345678">OK</NRSError>
+  <NRSError volume_serial="569899">Fail</NRSError>
+</ReserveDiskSizeRes>
+
+
+<!-- 
+레코딩 공간이 할당된 스토리지에 레코딩 할 장치를 설정하는 setup command.
+장치를 스토리지에 할당하기 전에 <ReservedDiskSizeReq>를 통해 스토리지에 저장공간이 먼저 설정되어야함.
+<Drive> element는 여러 개 가능.
+-->
+<UpdateDiskPolicyReq>
+  <Drive volume_serial="12345678">
+    <MAC>0007D800F314</MAC>
+    <MAC>0007D800BA20</MAC>
+    <MAC>0007D800D101</MAC>
+  </Drive>
+</UpdateDiskPolicyReq>
+
+<UpdateDiskPolicyRes>
+  <NRSError volume_serial="12345678">OK</NRSError>
+</UpdateDiskPolicyRes>
+
+
+<!--
+스토리지 별로 레코딩 설정 된 장치 정보를 얻는 command.
+-->
+<GetDiskPolicyReq>
+</GetDiskPolicyReq>
+
+<GetDiskPolicyRes>
+  <Drive volume_serial="12345678">
+    <MAC>0007D800F314</MAC>
+    <MAC>0007D800BA20</MAC>
+    <MAC>0007D800D101</MAC>
+  </Drive>
+</GetDiskPolicyRes>
+
+
+<!--
+레코딩 시작 command.
+<StreamID> element는 같은 장치 (동일 MAC)에 속한 것들만 여러 개 가능.
+-->
+<StartRecordingReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</StartRecordingReq>
+
+<StartRecordingRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>Fail</NRSError>
+</StartRecordingRes>
+
+<StartRecordingAllReq/>
+
+<StartRecordingAllRes>
+  <NRSError>OK</NRSError>
+</StartRecordingAllRes>
+
+
+<!--
+레코딩 종료 command.
+-->
+<StopRecordingReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</StopRecordingReq>
+
+<StopRecordingRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>Fail</NRSError>
+</StopRecordingRes>
+
+<StopRecordingAllReq/>
+
+<StopRecordingAllRes>
+  <NRSError>OK</NRSError>
+</StopRecordingAllRes>
+
+
+<!--
+레코딩 스케줄에 상관없이 continuous 레코딩을 시작하는 command.
+<StreamID> element는 같은 장치 (동일 MAC)에 속한 것들만 여러 개 가능.
+-->
+<StartManualRecordingReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</StartManualRecordingReq>
+
+<StartManualRecordingRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>OK</NRSError>
+</StartManualRecordingRes>
+
+
+<!--
+메뉴얼 레코딩을 종료하고 command. 
+종료 후 기존의 레코딩 스케줄대로 레코딩 하게 됨.
+-->
+<StopManualRecordingReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</StopManualRecordingReq>
+
+<StopManualRecordingRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>OK</NRSError>
+</StopManualRecordingRes>
+
+
+<!--
+레코딩 데이터를 삭제하는 setup command.
+-->
+<DeleteAllRecordingReq>
+  <MAC>0007D800F314</MAC>
+  <MAC>0007D800F315</MAC>
+</DeleteAllRecordingReq>
+
+<DeleteAllRecordingRes>
+  <NRSError mac='0007D800F314'>OK</NRSError>
+  <NRSError mac='0007D800F315'>OK</NRSError>
+</DeleteAllRecordingRes>
+
+
+
+<!-- ****************************** 릴레이 ***************************** -->
+
+<!--
+릴레이 시작 command.
+서버와 새 session을 연결 한 후 이 xml을 전송해야 한다. (기존 control session으로 보내는 command가 아님)
+-->
+<StartRelayReq>
+  <ClientID>1</ClientID> <!-- 로그인 할 때 얻은 control session ID -->
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <Type>1</Type> <!-- 릴레이 받을 프레임 종류를 bitmasking (video: 1, audio: 2, meta: 4) -->
+</StartRelayReq>
+
+<StartRelayRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>NoDeviceStreamInformation</NRSError>
+</StartRelayRes>
+
+
+<!-- 
+릴레이 되고 있는 프레임 종류의 bitmask를 변경하는 command.
+<StreamID> element는 여러 개 사용 가능
+-->
+<UpdateRelayReq>
+  <ClientID>1</ClientID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+  <Type>7</Type>
+</UpdateRelayReq>
+
+<UpdateRelayRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>OK</NRSError>
+</UpdateRelayRes>
+
+
+<!--
+client side에서 명시적으로 릴레이를 종료하는 command.
+<StreamID> element는 여러 개 사용 가능
+-->
+<StopRelayReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+</StopRelayReq>
+
+<StopRelayRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>Fail</NRSError>
+</StopRelayRes>
+
+
+
+<!-- *************************** 플레이백, export ************************* -->
+
+<!--
+플레이백 시작 command.
+서버와 새 session을 연결 한 후 이 xml을 전송해야 한다. (기존 control session으로 보내는 command가 아님)
+-->
+<StartPlaybackReq>
+  <ClientID>1</ClientID> <!-- 로그인 할 때 얻은 control session ID -->
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+  <StartDateTime>2002-05-30T09:30:10</StartDateTime> <!-- xs::dateTime -->
+  <Type>1</Type> <!-- 플레이백 받을 프레임 종류를 bitmasking (video: 1, audio: 2, meta: 4) -->
+  <!-- 
+       플래이백 요청 시각에 시잔중복이 있는 경우 시간중복ID 선택: <GetRecordingOverlapIndexReq> 참조
+       시간중복이 있는데 명시적으로 ID를 선택하지 않으면 서버에서 임의로 선택해서 플레이백.
+  -->
+  <OverlapID>1</OverlapID> <!-- optional -->
+  <!--
+  플레이백 연결 후 방향 설정: Forward, Backward, 이 element를 명시적으로 전달하지 않으면 플레이백 연결 후 바로 pause상태가 됨.
+  -->
+  <Direction>Forward</Direction> <!-- optional, xs:PlaybackDirection -->
+</StartPlaybackReq>
+
+<StartPlaybackRes>
+  <NRSError>OK</NRSError>
+  <PlaybackID>1</PlaybackID> <!-- 플레이백 session연결에 성공한 후 부여되는 ID, 실패하면 0 -->
+</StartPlaybackRes>
+
+
+<!-- 
+플레이백 방향,속도 등을 조절하는 command. 
+-->
+<ControlPlaybackReq>
+  <PlaybackID>1</PlaybackID> <!-- 플레이백 session 연결할 때 얻은 ID -->
+  <Direction>Forward</Direction> <!-- xs:PlaybackDirection -->
+  <Speed>4</Speed> <!-- 1:정배속, MAX: 최대 배속 -->
+  <OnlyKeyFrame>0</OnlyKeyFrame> <!-- 키프레임만 플레이백 할 것인지 유무 (역방향은 무조건 1) -->
+</ControlPlaybackReq>
+
+<ControlPlaybackRes>
+  <NRSError playback_id="1">OK</NRSError>
+</ControlPlaybackRes>
+
+
+<!-- 
+플레이백 방향,속도 등을 얻는 command. 
+-->
+<GetPlaybackControlReq>
+  <PlaybackID>1</PlaybackID>
+</GetPlaybackControlReq>
+
+<GetPlaybackControlRes>
+  <NRSError playback_id="1">OK</NRSError>
+  <Direction>Forward</Direction>
+  <Speed>4</Speed>
+  <OnlyKeyFrame>0</OnlyKeyFrame>
+</GetPlaybackControlRes>
+
+
+<!--
+client side에서 명시적으로 플레이백 session을 종료하는 command.
+-->
+<StopPlaybackReq>
+  <PlaybackID>1</PlaybackID>
+</StopPlaybackReq>
+
+<StopPlaybackRes>
+  <NRSError playback_id="1">Fail</NRSError>
+</StopPlaybackRes>
+
+
+<!--
+플레이백 resume, pause command.
+-->
+<PausePlaybackReq>
+  <PlaybackID>1</PlaybackID>
+</PausePlaybackReq>
+
+<PausePlaybackRes>
+  <NRSError playback_id="1">OK</NRSError>
+</PausePlaybackRes>
+
+<ResumePlaybackReq>
+  <PlaybackID>1</PlaybackID>
+</ResumePlaybackReq>
+
+<ResumePlaybackRes>
+  <NRSError playback_id="1">OK</NRSError>
+</ResumePlaybackRes>
+
+
+<!--
+플레이백 점프 command
+-->
+<JumpPlaybackReq>
+  <PlaybackID>1</PlaybackID>
+  <DateTime>2002-05-30T11:30:10</DateTime>
+  <OverlapID>7</OverlapID> <!-- <StartPlaybackReq> 참조 -->
+</JumpPlaybackReq>
+
+<JumpPlaybackRes>
+  <NRSError playback_id="1">OK</NRSError>
+</JumpPlaybackRes>
+
+
+<!-- 
+pause상태로 한 프레임씩 앞,뒤로 진행하는 command.
+역방향으로는 키프레임 단위로 진행됨.
+--> 
+<NextStepPlaybackReq>
+  <PlaybackID>1</PlaybackID>
+</NextStepPlaybackReq>
+
+<NextStepPlaybackRes>
+  <NRSError playback_id="1">OK</NRSError>
+</NextStepPlaybackRes>
+
+<PrevStepPlaybackReq>
+  <PlaybackID>1</PlaybackID>
+</PrevStepPlaybackReq>
+
+<PrevStepPlaybackRes>
+  <NRSError playback_id="1">OK</NRSError>
+</PrevStepPlaybackRes>
+
+
+<!--
+플레이백 session에 속한 장치들 중 가장 앞,뒤 레코딩 시작으로 점프하는 command.
+-->
+<GoToFirstPlaybackReq>
+  <PlaybackID>1</PlaybackID>
+</GoToFirstPlaybackReq>
+
+<GoToFirstPlaybackRes>
+  <NRSError playback_id='1'>OK</NRSError>
+  <DateTime>2002-05-30T09:30:10</DateTime> <!-- 점프된 가장 앞 레코딩 시작, xs::dateTime -->
+</GoToFirstPlaybackRes>
+
+<GoToLastPlaybackReq>
+  <PlaybackID>1</PlaybackID>
+</GoToLastPlaybackReq>
+
+<GoToLastPlaybackRes>
+  <NRSError playback_id='1'>OK</NRSError>
+  <DateTime>2002-05-30T09:30:10</DateTime> <!-- 점프된 가장 뒤 레코딩 시작, xs::dateTime -->
+</GoToLastPlaybackRes>
+
+
+<!-- 
+장치의 연단위 레코딩 유무를 얻는 command.
+-->
+<GetYearIndexReq>
+  <Year>2011</Year>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</GetYearIndexReq>
+
+<GetYearIndexRes>
+  <!-- 요청한 연도의 1월 ~ 12월 까지 레코딩 유무를 나타내는 12bit 비트플래그 (2바이트), base64 encoded -->
+  <YearIndex stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>MTExMTEx</YearIndex> 
+  <YearIndex stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>MTExMTEx</YearIndex>
+</GetYearIndexRes>
+
+
+<!-- 
+장치의 월단위 레코딩 유무를 얻는 command.
+-->
+<GetMonthIndexReq>
+  <Year>2011</Year>
+  <Month>1</Month> <!-- 1 ~ 12 -->
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</GetMonthIndexReq>
+
+<GetMonthIndexRes>
+  <!-- 요청한 월의 1일 ~ 31일 까지 레코딩 유무를 나타내는 31bit 비트플래그 (4바이트), base64 encoded -->
+  <MonthIndex stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>MTExMTEx</MonthIndex> 
+  <MonthIndex stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>MTExMTEx</MonthIndex>
+</GetMonthIndexRes>
+
+
+<!-- 
+장치의 일단위 레코딩 유무를 얻는 command.
+-->
+<GetDayIndexReq>
+  <Year>2011</Year>
+  <Month>1</Month>
+  <Day>25</Day> <!-- 1 ~ 31 -->
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</GetDayIndexReq>
+
+<GetDayIndexRes>
+  <!-- 요청한 일의 0시 ~ 23시 까지 레코딩 유무를 나타내는 24bit 비트플래그 (6바이트), base64 encoded -->
+  <DayIndex stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>MTExMTEx</DayIndex>
+  <DayIndex stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>MTExMTEx</DayIndex>
+</GetDayIndexRes>
+
+
+<!-- 
+장치의 시단위 레코딩 유무를 얻는 command.
+-->
+<GetHourIndexReq>
+  <Year>2011</Year>
+  <Month>1</Month>
+  <Day>25</Day>
+  <Hour>0</Hour> <!-- 0 ~ 23 --> 
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</GetHourIndexReq>
+
+<GetHourIndexRes>
+  <HourIndex stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>
+    <!-- 요청한 시의 0분 ~ 59분 까지 레코딩 유무를 나타내는 60bit 비트플래그 (8바이트), base64 encoded -->
+    <IsRecorded>MTExMTEx</IsRecorded>
+    <!-- 요청한 시의 0분 ~ 59분 까지 레코딩 시간중복 유무를 나타내는 60bit 비트플래그 (8바이트), base64 encoded -->
+    <IsOverlapped>MTExMTEx</IsOverlapped>
+  </HourIndex>
+</GetHourIndexRes>
+
+
+<!-- 
+장치의 분단위 레코딩 시간중복 ID를 얻는 command.
+-->
+<GetRecordingOverlapIndexReq>
+  <Year>2011</Year>
+  <Month>1</Month>
+  <Day>25</Day>
+  <Hour>0</Hour> <!-- 0 ~ 23 --> 
+  <Min>59</Min> <!-- 0 ~ 59 -->
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</GetRecordingOverlapIndexReq>
+
+<GetRecordingOverlapIndexRes>
+  <OverlapID>0</OverlapID>
+  <OverlapID>11</OverlapID>
+  <OverlapID>2</OverlapID>
+  <OverlapID>1</OverlapID>
+  <OverlapID>7</OverlapID>
+</GetRecordingOverlapIndexRes>
+
+
+<!--
+장치의 연간 전체의 레코딩 유무를 얻는 command. (not recommended)
+-->
+<GetAllIndexReq>
+  <Year>2011</Year>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+</GetAllIndexReq>
+
+<GetAllIndexRes>
+  <AllIndex stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'> 
+    <IsRecorded>MTExMTEx</IsRecorded> <!-- 월,일,시,분 모두 비트플래그 (12 * 31 * 24 * 8 = 71424바이트) -->
+    <IsOverlapped>MTExMTEx</IsOverlapped> <!-- 월,일,시,분 모두 비트플래그 (12 * 31 * 24 * 8 = 71424바이트) -->
+  </AllIndex> 
+</GetAllIndexRes>
+
+
+<!--
+서버의 레코딩 인덱스 DB에 직접 SQL 쿼리를 실행하는 command.
+-->
+<QueryIndexReq>
+  <Query>Select * From Event;</Query>
+</QueryIndexReq>
+
+<QueryIndexRes>
+  <Record>aaa|bbb|111</Record> <!-- 열 구분자는 | -->
+  <Record>aaa|111|222</Record>
+</QueryIndexRes>
+
+
+<!--
+export할 데이터 크기를 estimation하는 command.
+-->
+<EstimateExportReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+  <StartDateTime>2002-05-30T09:30:10</StartDateTime>
+  <EndDateTime>2002-05-30T10:30:10</EndDateTime>
+  <Type>1</Type> <!-- <StartPlaybackReq> 참조 -->
+  <IncludeClipViewer>1</IncludeClipViewer> <!-- clip viewer 실팽파일의 크기를 export estimation값에 반영 할 것인가 유무 -->
+  <OverlapID>1</OverlapID> <!-- <StartPlaybackReq> 참조 -->
+</EstimateExportReq>
+
+<EstimateExportRes>
+  <Size>102400000</Size> <!-- byte -->
+</EstimateExportRes>
+
+
+<!--
+export 시작 command.
+서버와 새 session을 연결 한 후 이 xml을 전송해야 한다. (기존 control session으로 보내는 command가 아님)
+-->
+<StartExportReq>
+  <ClientID>1</ClientID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+  <StartDateTime>2002-05-30T09:30:10</StartDateTime>
+  <EndDateTime>2002-05-30T10:30:10</EndDateTime>
+  <Type>1</Type>
+  <IncludeClipViewer>1</IncludeClipViewer> <!-- clip viewer 실행파일 까지 함께 export 할 것인지 유무 -->
+  <OverlapID>1</OverlapID>
+</StartExportReq>
+
+<StartExportRes>
+  <NRSError>OK</NRSError>
+  <ExportID>1</ExportID> <!-- export session연결에 성공한 후 부여되는 ID, 실패하면 0 -->
+</StartExportRes>
+
+
+<!--
+client side에서 명시적으로 export session을 종료하는 command.
+-->
+<StopExportReq>
+  <ExportID>1</ExportID>
+</StopExportReq>
+
+<StopExportRes>
+  <NRSError export_id="1">OK</NRSError>
+</StopExportRes>
+
+
+<!--
+export를 resume, pause하는 command.
+-->
+<PauseExportReq>
+  <ExportID>1</ExportID>
+</PauseExportReq>
+
+<PauseExportRes>
+  <NRSError export_id="1">OK</NRSError>
+</PauseExportRes>
+
+<ResumeExportReq>
+  <ExportID>1</ExportID>
+</ResumeExportReq>
+
+<ResumeExportRes>
+  <NRSError export_id="1">OK</NRSError>
+</ResumeExportRes>
+
+
+
+<!-- **************************** 서버 상태 정보 ************************** -->
+
+<!--
+서버와 장치의 연결상태를 얻는 command.
+<DeviceStream> element는 여러 개 가능하고 하나도 엾이 요청하는 경우는 전체 장치의 상태를 반환함. 
+-->
+<GetStreamStatusReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</GetStreamStatusReq>
+
+<GetStreamStatusRes>
+  <StreamStatus stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>
+    <IsConnected>1</IsConnected> <!-- 장치 연결 유무 -->
+    <Bitrate>2000</Bitrate> <!-- kbps -->
+    <FPS>30</FPS>
+    <VideoCodec>codec name</VideoCodec> <!-- MJPEG, MPEG4, MPEG4 Simple Profile, MPEG4 Advanced Simple Profile, H264, H264 Baseline Profile, H264 Main Profile, H264 High Profile, Unknown -->
+    <AudioCodec>codec name</AudioCodec> <!-- PCM8, PCM16, G711U, G711A, G726, AAC, Unknown -->
+    <AudioBitrate>2000</AudioBitrate> <!-- bps -->
+    <AudioSamplerate>1000</AudioSamplerate> <!-- kHz -->
+    <IsVideoRecording>1</IsVideoRecording> <!-- 현재 비디오가 레코딩 되고 있는가? -->
+    <IsAudioRecording>1</IsAudioRecording> <!-- 현재 오디오가 레코딩 되고 있는가? -->
+    <ResolutionWidth>1024</ResolutionWidth> <!-- 해상도 -->
+    <ResolutionHeight>768</ResolutionHeight> <!-- 해상도 -->
+  </StreamStatus>
+  <StreamStatus stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>
+    <NRSError>UnknownDeviceStream</NRSError>
+  </StreamStatus>
+</GetStreamStatusRes>
+
+
+<!-- 
+서버의 리소스 상태를 얻는 command.
+-->
+<GetSystemResourceInfoReq>
+</GetSystemResourceInfoReq>
+
+<GetSystemResourceInfoRes>
+  <Drive volume_serial="12345678"> <!-- <GetDiskInfoReq> command 참조 -->
+    <RootPath>C:\</RootPath>
+    <Name>XP Pro (C:\)</Name>
+    <VolumeSerial>12345678</VolumeSerial>
+    <Total>2500</Total>
+    <Reserved>2405</Reserved>
+    <Usage>1201</Usage>
+    <TotalUsage>2400</TotalUsage>
+  </Drive>
+  <CPU index="0">
+    <Usage>70</Usage> <!-- % -->
+  </CPU>
+  <CPU index="1">
+    <Usage>50</Usage> <!-- % -->
+  </CPU>
+  <Memory>
+    <Total>2096</Total> <!-- MB -->
+    <Usage>500</Usage>
+  </Memory>
+  <Network name="테스트망">
+    <Speed>100</Speed> <!-- Mbps -->
+    <Usage>80.4</Usage> <!-- % -->
+    <Bytes>2234</Bytes> <!-- 현재 사용중인 byte -->
+  </Network>
+</GetSystemResourceInfoRes>
+
+
+<!-- 
+서버의 로그 DB에 직접 SQL 쿼리를 실행하는 command.
+-->
+<QueryLogReq>
+  <Query>select * from statuslog;</Query>
+</QueryLogReq>
+
+<QueryLogRes>
+  <Record>1|123123|1|1|1000</Record> <!-- 열 구분자는 | -->
+  <Record>2|22222|1|1|2000</Record>
+</QueryLogRes>
+
+
+
+<!-- ******************* 서버에서 발생하는 notification ******************** -->
+
+<!-- 
+서버에서 session (control, relay, playback, export)을 명시적으로 종료할 때 해당 session으로 원인을 알려줌.
+-->
+<ConnectionStop>
+  <NRSError>Timeout</NRSError>
+</ConnectionStop>
+
+
+<!--
+물리적 디스크 공간 부족이나 다른 오류로 레코딩을 진행할 수 없을 때.
+-->
+<RecordingStorageFull>
+  <Drive volume_serial="12345678">C:\NCRecording</Drive> <!-- full된 storage list -->
+  <Drive volume_serial="45687899">F:\NCRecording</Drive>
+  <MAC>0007D800F314</MAC> <!-- full된 storage에 할당된 장치 리스트 -->
+  <MAC>0007D800F315</MAC>
+</RecordingStorageFull>
+
+
+<!--
+reserved 공간 만큼 레코딩 했는 데 overwriting off이어서 더 진행할 수 없을 때.
+-->
+<ReservedStorageFull>
+  <Drive volume_serial="12345678">C:\NCRecording</Drive> <!-- full된 storage list -->
+  <Drive volume_serial="45687899">F:\NCRecording</Drive>
+  <MAC>0007D800F314</MAC> <!-- full된 storage에 할당된 장치 리스트 -->
+  <MAC>0007D800F315</MAC>
+</ReservedStorageFull>
+
+
+<!--
+레코딩 overwriting이 실패한 경우(파일을 강제로 삭제한 경우, 파일이 플레이백 등으로 사용 중인 경우,...)에
+모든 control session으로 원인을 알려줌.
+-->
+<OverwritingError>
+  <!-- overwriting 실패한 파일 정보, is_exist 속성은 실제 파일이 storage에 존재하는지 여부 -->
+  <TargetFilePath is_exist="1">D:\NCRecording\0007D800F314\20110630T142317.hra</TargetFilePath>
+  <TargetFilePath is_exist="0">F:\NCRecording\0007D800F315\20120330T201154.hra</TargetFilePath>
+</OverwritingError>
+
+
+<!--
+서버의 설정 정보(장치정보, 레코딩 스케줄, 계정, ...)가 변경된 경우에 모든 control session으로 원인을 알려줌.
+-->
+<ConfigurationChanged client_id='1'> <!-- client_id 속성은 설정 변경을 시도한 control session ID -->
+</ConfigurationChanged>
+
+
+<!--
+<KillStreamReq>에 의해 장치가 강제로 연결 종료된 경우 릴레이, 레코딩 등이 종료되므로 모든 control session으로 
+kill된 장치 리스트를 알려줌.
+-->
+<StreamKilled is_setup='1'> <!-- is_setup 속성은 setup계정으로 로그인 한 client가 kill한 경우에 1 -->
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE549</StreamID>
+</StreamKilled>
+
+
+<!--
+플레이백 중 문제가 있을 경우 플레이백이 pause상태로 변하고 해당 control session에 원인을 알려줌.
+-->
+<PlaybackError>
+  <PlaybackID>1</PlaybackID>
+  <MAC>0007D800F314</MAC>
+  <NRSError>EndOfRecording</NRSError>
+  <DateTime>2002-05-30T09:30:10</DateTime>
+</PlaybackError>
+
+
+<!--
+<RecordingStorageFault>
+  <Drive volume_serial="12345678">C:\NCRecording</Drive>
+  <Drive volume_serial="45687899">F:\NCRecording</Drive>
+  <MAC>0007D800F314</MAC>
+  <MAC>0007D800F315</MAC>
+</RecordingStorageFault>
+-->
+
+<!--
+저장 중 스토리지의 문제가 있을 경우, 문제가 되는 저장파일의 경로를 알려줌.
+-->
+<DiskError>
+	d:\\NCRecording\\FF20EE30\\20130203123412.hra
+</DiskError>
+
+<!--
+저장 중 스토리지의 문제가 있을 경우, 문제가 되는 스트림의 MAC을 알려줌.
+-->
+<RecordingKeyframeMode>
+	FF20EE30
+</RecordingKeyframeMode>
+
+<!--
+저장 중 스토리지의 문제가 있을 경우, 저장 버퍼를 초기화함.
+-->
+<RecordingBufferClean>
+	Buffer Clean
+</RecordingBufferClean>
+
+<!-- ********* NCTitanium Monotoring Service에서만 사용하는 기능 *********** -->
+
+<!--
+NCTitaniumConfig.xml 백업
+id, pwd attribute가 없으면 현재 로그인 된 계정의 파일로 save/load함
+-->
+<SaveMSConfigReq id='heonjushin' pwd='21232f297a57a5a743894a0e4a801fc3'>
+</SaveMSConfigReq>
+
+<LoadMSConfigReq id='heonjushin' pwd='21232f297a57a5a743894a0e4a801fc3'>
+</LoadMSConfigReq>
+
+<SaveGlobalMSConfigReq>
+</SaveGlobalMSConfigReq>
+
+<LoadGlobalMSConfigReq>
+</LoadGlobalMSConfigReq>
+
+<!--
+    http://{ip:http_port}/event/trigger.php?app=set&make_trigger=1
+-->
+<ManualTriggerReq>
+  <StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+  <Number>1</Number>
+</ManualTriggerReq>
+
+<ManualTriggerRes>
+  <NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+</ManualTriggerRes>
+
+<!--
+Command : "PTZLib.h" 참조 (Common/Include/PTZLib)
+typedef enum EnumPtzAction
+{
+	STOP = 0,
+	PAN_UP,
+	PAN_DOWN,
+	TILT_LEFT,
+	TILT_RIGHT,
+
+	FOCUS_FAR, 
+	FOCUS_NEAR, 
+	ZOOM_TELE,
+	ZOOM_WIDE,
+	IRIS_OPEN,
+	IRIS_CLOSE,
+
+	PRESET_GO,
+	PRESET_SAVE,
+	AUTOSCAN_GO,
+	TOUR_GO,
+	PATTERN_GO,
+
+	OSD_MENU,
+	OSD_HOME,
+	PRESET_SETUP,
+	AUTOSCAN_SETUP,
+	TOUR_SETUP,
+	PATTERN_SETUP,
+	ESC_KEY,
+	CTRL_KEY,
+
+	DIAGONAL_LU,
+	DIAGONAL_LD,
+	DIAGONAL_RU,
+	DIAGONAL_RD,
+
+	RELEASE_ALARM_PRESET,
+
+	ALARM_SETUP,	// E-series only
+
+	FOCUS_STOP,
+	ZOOM_STOP,
+	IRIS_STOP,
+
+	ENTER,	// SD급 카메라  virtual enter key	=> move=enter
+
+	MENU_LEFT,
+	MENU_RIGHT,
+	MENU_UP,
+	MENU_DOWN,
+	MENU_STOP,
+
+	MENU_ENTER,	// => menu=enter
+
+	SHORTCUT_ON,	// 40
+	SHORTCUT_OFF	// 41
+
+} EnumPtzAction;
+-->
+	<PTZActionReq>
+		<StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+		<URL>/mptz/control.php</URL> <!-- mptz 제어 등에 쓰는 용도, optional -->
+		<Command>0</Command>
+		<Param>0</Param>
+		<Speed tilt="3" pan="3" /> <!-- optional이고 범위는 1 ~ 8 -->
+	</PTZActionReq>
+
+	<PTZActionRes>
+		<NRSError stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE548'>OK</NRSError>
+	</PTZActionRes>
+
+<!--
+이벤트 action
+
+EventType element값은 레코딩포맷에 있는 이벤트 프레임 타입을 bitmasking해서 전달
+	FRAME_UNKNOWN = 0x00000000,
+	FRAME_VIDEO = 0x00000001,
+	FRAME_AUDIO = 0x00000002,
+	FRAME_META_IMAGE = 0x00000004,
+	FRAME_META_TEXT = 0x00000008,
+	FRAME_META_PTZ = 0x00000010,
+	FRAME_META_ONBOOT = 0x00000020,
+	FRAME_META_ALARMIN = 0x00000040,
+	FRAME_META_TRIGGER = 0x00000080,
+	FRAME_META_MOTION = 0x00000100,
+	FRAME_META_VLOSS = 0x00000200,
+	FRAME_META_NETLOSS = 0x00000400,
+	FRAME_META_VA_MOTION = 0x00000800,
+	FRAME_META_VA_TRACKING = 0x00010000,
+	FRAME_META_VA_CROSS = 0x00020000,
+	FRAME_META_VA_ABANDON = 0x00040000,
+	FRAME_META_VA_REMOVAL = 0x00080000,
+	FRAME_META_VA_ENTER = 0x00100000,	
+	FRAME_META_VA_ALARM = 0x00200000,
+	FRAME_META_VA_ZONE = 0x00400000,
+	FRAME_META_VA_FACE = 0x00800000,
+	FRAME_META_VA_MINE = 0x01000000,
+	FRAME_META_VA_SCNCHG = 0x02000000,
+	FRAME_META_VA_UNFOC = 0x04000000
+-->
+	<UpdateEventActionReq>
+		<EventActionConfig id='1'>
+			<StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+			<EventType alarm_number='1'>4</EventType> <!-- alarm_number attribute: 알람1,2 구분 -->
+			<EventAction>
+				<ManualRecording enable='1'>10</ManualRecording> <!-- dwell time second -->
+				<Preset enable='0'>1</Preset> <!-- preset number -->
+				<ManualTrigger enable='1'>2</ManualTrigger> <!-- manual trigger number -->
+			</EventAction>
+			<EventActionRelay>
+				<EventAction stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>
+					<ManualRecording enable='1'>10</ManualRecording>
+					<Preset enable='0'>1</Preset>
+					<ManualTrigger enable='1'>2</ManualTrigger>
+				</EventAction>
+				<EventAction stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE511'>
+					<ManualRecording enable='1'>10</ManualRecording>
+					<Preset enable='0'>1</Preset>
+					<ManualTrigger enable='1'>2</ManualTrigger>
+				</EventAction>
+			</EventActionRelay>
+		</EventActionConfig>
+		<EventActionConfig id='2'>
+			<StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE511</StreamID>
+			<EventType>2</EventType> <!-- alarm_number attribute: 알람1,2 구분 -->
+			<EventAction>
+				<ManualRecording enable='1'>10</ManualRecording> <!-- dwell time second -->
+				<Preset enable='0'>1</Preset> <!-- preset number -->
+				<ManualTrigger enable='1'>2</ManualTrigger> <!-- manual trigger number -->
+			</EventAction>
+			<EventActionRelay>
+				<EventAction stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>
+					<ManualRecording enable='1'>10</ManualRecording>
+					<Preset enable='0'>1</Preset>
+					<ManualTrigger enable='1'>2</ManualTrigger>
+				</EventAction>
+				<EventAction stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE511'>
+					<ManualRecording enable='1'>10</ManualRecording>
+					<Preset enable='0'>1</Preset>
+					<ManualTrigger enable='1'>2</ManualTrigger>
+				</EventAction>
+			</EventActionRelay>
+		</EventActionConfig>
+	</UpdateEventActionReq>
+
+	<UpdateEventActionRes>
+		<NRSError id='1'>AlreadyUsing</NRSError>
+		<NRSError id='2'>OK</NRSError>
+	</UpdateEventActionRes>
+
+<!--
+EventActionConfig element가 없으면 다 반환
+-->
+	<GetEventActionReq>
+		<EventActionConfig>
+			<StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+			<EventType alarm_number='1'>4</EventType> <!-- alarm_number attribute: 알람1,2 구분 -->
+		</EventActionConfig>
+		<EventActionConfig>
+			<StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE511</StreamID>
+			<EventType>5</EventType> <!-- alarm_number attribute: 알람1,2 구분 -->
+		</EventActionConfig>
+	</GetEventActionReq>
+
+	<GetEventActionRes>
+		<EventActionConfig>
+			<StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+			<EventType alarm_number='1'>4</EventType> <!-- alarm_number attribute: 알람1,2 구분 -->
+			<EventAction>
+				<ManualRecording enable='1'>10</ManualRecording> <!-- dwell time second -->
+				<Preset enable='0'>1</Preset> <!-- preset number -->
+				<ManualTrigger enable='1'>2</ManualTrigger> <!-- manual trigger number -->
+			</EventAction>
+			<EventActionRelay>
+				<EventAction stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>
+					<ManualRecording enable='1'>10</ManualRecording>
+					<Preset enable='0'>1</Preset>
+					<ManualTrigger enable='1'>2</ManualTrigger>
+				</EventAction>
+				<EventAction stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE511'>
+					<ManualRecording enable='1'>10</ManualRecording>
+					<Preset enable='0'>1</Preset>
+					<ManualTrigger enable='1'>2</ManualTrigger>
+				</EventAction>
+			</EventActionRelay>
+		</EventActionConfig>
+		<EventActionConfig>
+			<StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE511</StreamID>
+			<EventType>5</EventType> <!-- alarm_number attribute: 알람1,2 구분 -->
+			<EventAction>
+				<ManualRecording enable='1'>10</ManualRecording> <!-- dwell time second -->
+				<Preset enable='0'>1</Preset> <!-- preset number -->
+				<ManualTrigger enable='1'>2</ManualTrigger> <!-- manual trigger number -->
+			</EventAction>
+			<EventActionRelay>
+				<EventAction stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE549'>
+					<ManualRecording enable='1'>10</ManualRecording>
+					<Preset enable='0'>1</Preset>
+					<ManualTrigger enable='1'>2</ManualTrigger>
+				</EventAction>
+				<EventAction stream_id='ECCB766B-17FF-4fa5-933A-E1AF2C6AE511'>
+					<ManualRecording enable='1'>10</ManualRecording>
+					<Preset enable='0'>1</Preset>
+					<ManualTrigger enable='1'>2</ManualTrigger>
+				</EventAction>
+			</EventActionRelay>
+		</EventActionConfig>
+	</GetEventActionRes>
+
+<!--
+EventActionConfig element가 없으면 다 삭제
+-->
+	<DeleteEventActionReq>
+		<EventActionConfig id='1'>
+			<StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE548</StreamID>
+			<EventType alarm_number='1'>4</EventType> <!-- alarm_number attribute: 알람1,2 구분 -->
+		</EventActionConfig>
+		<EventActionConfig id='2'>
+			<StreamID>ECCB766B-17FF-4fa5-933A-E1AF2C6AE511</StreamID>
+			<EventType>5</EventType> <!-- alarm_number attribute: 알람1,2 구분 -->
+		</EventActionConfig>
+	</DeleteEventActionReq>
+
+	<DeleteEventActionRes>
+		<NRSError id='1'>OK</NRSError>
+		<NRSError id='2'>OK</NRSError>
+	</DeleteEventActionRes>
+
+<!--
+시스템 이벤트 상황에서 SMTP 설정
+-->
+	<UpdateSMTPConfigurationReq>
+		<SMTPConfiguration enable='1'>
+			<Sender>kukie@hitron.co.kr</Sender>
+			<Interval>10</Interval> <!-- second -->
+			<Aggregate>50</Aggregate>
+			<SMTPServer enable='1'>
+				<Address>192.168.1.100</Address>
+				<Port>25</Port>
+				<User>admin</User>
+				<Password>admin</Password>
+				<SSL>0</SSL>
+			</SMTPServer>
+		</SMTPConfiguration>
+	</UpdateSMTPConfigurationReq>
+	
+	<UpdateSMTPConfigurationRes>
+		<NRSError>OK</NRSError>
+	</UpdateSMTPConfigurationRes>
+
+	<GetSMTPConfigurationReq/>
+
+	<GetSMTPConfigurationRes>
+		<SMTPConfiguration enable='0'>
+			<Sender>kukie@hitron.co.kr</Sender>
+			<SMTPServer enable='0'>
+				<Address>192.168.1.100</Address>
+				<Port>25</Port>
+				<User>admin</User>
+				<Password>admin</Password>
+				<SSL>0</SSL>
+			</SMTPServer>
+		</SMTPConfiguration>
+	</GetSMTPConfigurationRes>
+	
+	<UpdateSMTPNotificationReq>
+		<SMTPNotification>
+			<NotificationType>RecordingStorageFull</NotificationType> <!-- xs::NRSNotification -->
+			<Receiver>
+				<List>kukie@hitron.co.kr</List>
+				<List>heonjushin@hitron.co.kr</List>
+			</Receiver>
+		</SMTPNotification>
+		<SMTPNotification>
+			<NotificationType>OverwritingError</NotificationType> <!-- xs::NRSNotification -->
+			<Receiver>
+				<List>kukie@hitron.co.kr</List>
+				<List>heonjushin@hitron.co.kr</List>
+			</Receiver>
+		</SMTPNotification>
+	</UpdateSMTPNotificationReq>
+
+<!--
+	NotificationType을 명시하지 않으면 전부 다
+-->
+	<GetSMTPNotificationReq>
+		<NotificationType>RecordingStorageFull</NotificationType> <!-- xs::NRSNotification -->
+	</GetSMTPNotificationReq>
+
+	<GetSMTPNotificationRes>
+		<SMTPNotification>
+			<NotificationType>RecordingStorageFull</NotificationType> <!-- xs::NRSNotification -->
+			<Receiver>
+				<List>kukie@hitron.co.kr</List>
+				<List>heonjushin@hitron.co.kr</List>
+			</Receiver>
+		</SMTPNotification>
+	</GetSMTPNotificationRes>
+
+<!--
+	remote discovery
+-->
+	<StartNativeDiscoveryReq/>
+
+	<StartNativeDiscoveryRes>
+		<NRSError>OK</NRSError>
+	</StartNativeDiscoveryRes>
+
+	<StopNativeDiscoveryReq/>
+
+	<StopNativeDiscoveryRes>
+		<NRSError>OK</NRSError>
+	</StopNativeDiscoveryRes>
+
+	<GetNativeDiscoveryResultReq/>
+
+<!--
+	status 속성값
+	0: 아직 연결 가능한지 확인 되지 않음
+	1: 연결 가능
+	2: 다른 계정 정보가 필요함
+	3: 연결 불가능
+-->
+	<GetNativeDiscoveryResultRes>
+		<NativeDevice mac='000fadadadad' status='1'>discovery API에서 나온 raw xml</NativeDevice>
+		<NativeDevice mac='000fadadad00' status='0'>discovery API에서 나온 raw xml</NativeDevice>
+	</GetNativeDiscoveryResultRes>
+
+	<StartONVIFDiscoveryReq/>
+
+	<StartONVIFDiscoveryRes>
+		<NRSError>OK</NRSError>
+	</StartONVIFDiscoveryRes>
+
+	<StopONVIFDiscoveryReq/>
+
+	<StopONVIFDiscoveryRes>
+		<NRSError>OK</NRSError>
+	</StopONVIFDiscoveryRes>
+
+	<GetONVIFDiscoveryResultReq/>
+
+<!--
+	status 속성값
+	0: 아직 연결 가능한지 확인 되지 않음
+	1: 연결 가능
+	2: 다른 계정 정보가 필요함
+	3: 연결 불가능
+-->
+	<GetONVIFDiscoveryResultRes>
+		<ONVIFDevice uuid='xxxxxxxxxxxx' status='1'>discovery API에서 나온 raw xml</ONVIFDevice>
+		<ONVIFDevice uuid='aaaaaaaaaaaa' status='0'>discovery API에서 나온 raw xml</ONVIFDevice>
+	</GetONVIFDiscoveryResultRes>
+
+	<LoginNativeDeviceReq>
+		<NativeDevice>
+			<MAC>000712345678</MAC>
+			<ID>admin</ID>
+			<Password>admin</Password>
+		</NativeDevice>
+		<NativeDevice>
+			<MAC>000123456789</MAC>
+			<ID>admin</ID>
+			<Password>admin</Password>
+		</NativeDevice>
+	</LoginNativeDeviceReq>
+
+	<LoginNativeDeviceRes>
+		<ConnectionStatus mac='000712345678'>1</ConnectionStatus>
+		<ConnectionStatus mac='000123456789'>2</ConnectionStatus>
+	</LoginNativeDeviceRes>
+
+	<LoginONVIFDeviceReq>
+		<ONVIFDevice>
+			<UUID>xxxxxxxxxxxx</UUID>
+			<ID>admin</ID>
+			<Password>admin</Password>
+		</ONVIFDevice>
+		<ONVIFDevice>
+			<UUID>aaaaaaaaaaaaaaa</UUID>
+			<ID>admin</ID>
+			<Password>admin</Password>
+		</ONVIFDevice>
+	</LoginONVIFDeviceReq>
+
+	<LoginONVIFDeviceRes>
+		<ConnectionStatus uuid='xxxxxxxxxx'>1</ConnectionStatus>
+		<ConnectionStatus uuid='aaaaaaaaaaa'>2</ConnectionStatus>
+	</LoginONVIFDeviceRes>
+
+	<RestartNativeDeviceReq>
+		<MAC>000712345678</MAC>
+		<MAC>000123456789</MAC>
+	</RestartNativeDeviceReq>
+
+	<RestartNativeDeviceRes>
+		<NRSError mac='000712345678'>OK</NRSError>
+		<NRSError mac='000712345679'>OK</NRSError>
+	</RestartNativeDeviceRes>
+
+	<ResetNativeDeviceReq>
+		<MAC>000712345678</MAC>
+		<MAC>000123456789</MAC>
+	</ResetNativeDeviceReq>
+
+	<ResetNativeDeviceRes>
+		<NRSError mac='000712345678'>OK</NRSError>
+		<NRSError mac='000712345679'>OK</NRSError>
+	</ResetNativeDeviceRes>
+
+	<FactoryDefaultNativeDeviceReq>
+		<MAC>000712345678</MAC>
+		<MAC>000123456789</MAC>
+	</FactoryDefaultNativeDeviceReq>
+
+	<FactoryDefaultNativeDeviceRes>
+		<NRSError mac='000712345678'>OK</NRSError>
+		<NRSError mac='000712345679'>OK</NRSError>
+	</FactoryDefaultNativeDeviceRes>
+
+	<AssignIPNativeDeviceReq>
+	  	<MAC>000712345678</MAC>
+	  	<IP>192.168.12.233</IP>
+	</AssignIPNativeDeviceReq>
+
+	<AssignIPNativeDeviceRes>
+	  	<NRSError>OK</NRSError>
+	</AssignIPNativeDeviceRes>
+
+	<GetNativeDeviceInfoReq>
+		<MAC>000712345678</MAC>
+		<MAC>000123456789</MAC>
+	</GetNativeDeviceInfoReq>
+
+	<GetNativeDeviceInfoRes>
+		<Info mac='000712345678'><![CDATA[ config.txt내용 ]]></Info>
+		<Info mac='000712345679'><![CDATA[ config.txt내용 ]]></Info>
+	</GetNativeDeviceInfoRes>
+
+
+</AllRequestResponseList>
