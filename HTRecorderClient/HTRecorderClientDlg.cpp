@@ -58,12 +58,16 @@ CHTRecorderClientDlg::CHTRecorderClientDlg(CWnd* pParent /*=NULL*/)
 void CHTRecorderClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_TREE_SITE, _sites);
+	DDX_Control(pDX, IDC_BUTTON_SETTUP, _btn_setup);
 }
 
 BEGIN_MESSAGE_MAP(CHTRecorderClientDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_WM_DESTROY()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 
@@ -99,6 +103,33 @@ BOOL CHTRecorderClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+
+
+	HTREEITEM root;
+	root = _sites.InsertItem(L"부산교통공사1호선", 0, 1, TVI_ROOT, TVI_LAST);
+
+	HMODULE self = GetModuleHandleW(NULL);
+	WCHAR szModuleName[MAX_PATH] = { 0 };
+	WCHAR szModulePath[FILENAME_MAX] = { 0 };
+	WCHAR *pszModuleName = szModulePath;
+	pszModuleName += GetModuleFileName(self, pszModuleName, (sizeof(szModulePath) / sizeof(*szModulePath)) - (pszModuleName - szModulePath));
+	if (pszModuleName != szModulePath)
+	{
+		WCHAR *slash = wcsrchr(szModulePath, '\\');
+		if (slash != NULL)
+		{
+			pszModuleName = slash + 1;
+			_wcsset(pszModuleName, 0);
+		}
+		else
+		{
+			_wcsset(szModulePath, 0);
+		}
+	}
+
+	CString setup_png_path = szModulePath;
+	setup_png_path += _T("images\\setup.png");
+	_btn_setup.LoadStdImage((LPWSTR)(LPCWSTR)setup_png_path);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -152,3 +183,35 @@ HCURSOR CHTRecorderClientDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+void CHTRecorderClientDlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+
+	// TODO: Add your message handler code here
+	
+}
+
+
+BOOL CHTRecorderClientDlg::OnEraseBkgnd(CDC* pDC)
+{
+	//// TODO: Add your message handler code here and/or call default
+	//CRect rect;
+
+	//GetClientRect(&rect);
+
+	//CBrush myBrush(RGB(0, 0, 0));    // dialog background color <- 요기 바꾸면 됨.
+
+
+
+
+	//CBrush *pOld = pDC->SelectObject(&myBrush);
+
+	//BOOL bRes = pDC->PatBlt(0, 0, rect.Width(), rect.Height(), PATCOPY);
+
+	//pDC->SelectObject(pOld);    // restore old brush
+
+	//return bRes;
+	return CDialogEx::OnEraseBkgnd(pDC);
+}

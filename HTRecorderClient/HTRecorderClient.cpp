@@ -83,6 +83,9 @@ BOOL CHTRecorderClientApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
+	Gdiplus::GdiplusStartupInput gpsi;
+	Gdiplus::GdiplusStartup(&gdip_token, &gpsi, NULL);
+
 	CHTRecorderClientDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
@@ -110,12 +113,14 @@ BOOL CHTRecorderClientApp::InitInstance()
 
 	// Since the dialog has been closed, return FALSE so that we exit the
 	//  application, rather than start the application's message pump.
+	
 	return FALSE;
 }
 
 int CHTRecorderClientApp::ExitInstance()
 {
 	AfxOleTerm(FALSE);
+	Gdiplus::GdiplusShutdown(gdip_token);
 
 	return CWinApp::ExitInstance();
 }

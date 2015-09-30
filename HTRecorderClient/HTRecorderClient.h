@@ -25,6 +25,7 @@ public:
 	virtual BOOL InitInstance();
 	virtual int ExitInstance();
 
+	ULONG_PTR gdip_token;
 // Implementation
 
 	DECLARE_MESSAGE_MAP()

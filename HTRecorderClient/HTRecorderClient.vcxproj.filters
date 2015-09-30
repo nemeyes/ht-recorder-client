@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\button">
+      <UniqueIdentifier>{ab9e5e6e-9461-427c-b89e-259bc66a9d83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\button">
+      <UniqueIdentifier>{b6195d8d-2a2c-4b71-b131-04efb2232372}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -33,6 +39,15 @@
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GdipButton.h">
+      <Filter>Header Files\button</Filter>
+    </ClInclude>
+    <ClInclude Include="GdiPlusBitmap.h">
+      <Filter>Header Files\button</Filter>
+    </ClInclude>
+    <ClInclude Include="DKMemDC.h">
+      <Filter>Header Files\button</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTRecorderClient.cpp">
@@ -43,6 +58,9 @@
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GdipButton.cpp">
+      <Filter>Source Files\button</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -57,6 +75,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\HTRecorderClient.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\icon1.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

@@ -3,6 +3,11 @@
 //
 
 #pragma once
+#include "afxcmn.h"
+#include "afxbutton.h"
+#include "afxwin.h"
+
+#include "GdipButton.h"
 
 
 // CHTRecorderClientDlg dialog
@@ -29,4 +34,11 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+private:
+
+	CTreeCtrl _sites;
+	CGdipButton _btn_setup;
+public:
+	afx_msg void OnDestroy();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
