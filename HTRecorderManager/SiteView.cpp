@@ -61,7 +61,7 @@ int CSiteView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 
 	// Load view images:
-	m_FileViewImages.Create(IDB_SITE_VIEW, 24, 0, RGB(255, 255, 255));
+	m_FileViewImages.Create(IDB_SITE_VIEW, 16, 0, RGB(255, 255, 255));
 	m_wndSiteView.SetImageList(&m_FileViewImages, TVSIL_NORMAL);
 
 	m_wndToolBar.Create(this, AFX_DEFAULT_TOOLBAR_STYLE, IDR_EXPLORER);
@@ -275,7 +275,7 @@ void CSiteView::OnChangeVisualStyle()
 
 	nFlags |= (theApp.m_bHiColorIcons) ? ILC_COLOR24 : ILC_COLOR4;
 
-	m_FileViewImages.Create(24, bmpObj.bmHeight, nFlags, 0, 0);
+	m_FileViewImages.Create(16, bmpObj.bmHeight, nFlags, 0, 0);
 	m_FileViewImages.Add(&bmp, RGB(255, 255, 255));
 
 	m_wndSiteView.SetImageList(&m_FileViewImages, TVSIL_NORMAL);
