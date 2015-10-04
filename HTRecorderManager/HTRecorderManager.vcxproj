@@ -45,6 +45,8 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)platform\win32\x86\debug\bin\</OutDir>
     <IntDir>$(SolutionDir)platform\win32\x86\debug\intermediate\$(ProjectName)\</IntDir>
+    <IncludePath>$(SolutionDir)HTRecorder\include;$(SolutionDir)dxd9\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)platform\win32\x86\debug\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -54,12 +56,13 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;SQLITE_THREADSAFE=2;SQLITE_SECURE_DELETE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>HTRecorder.lib;avcodec.lib;avformat.lib;avfilter.lib;avutil.lib;postproc.lib;swscale.lib;DisplayLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -103,6 +106,33 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="D3DRender.h" />
+    <ClInclude Include="DataAccessObject.h" />
+    <ClInclude Include="DisplayLib.h" />
+    <ClInclude Include="dx3d_gui.h" />
+    <ClInclude Include="dx3d_gui_button.h" />
+    <ClInclude Include="dx3d_gui_static.h" />
+    <ClInclude Include="Entities.h" />
+    <ClInclude Include="GrowableArray.hpp" />
+    <ClInclude Include="GUIDGenerator.h" />
+    <ClInclude Include="HTNotificationReceiver.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="HTPlayBackStreamReceiver.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="HTRecorderFactory.h" />
+    <ClInclude Include="RecorderDAO.h" />
+    <ClInclude Include="RecorderDlg.h" />
+    <ClInclude Include="HTRecorderIF.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="HTRelayStreamReceiver.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="ScopedLock.h" />
+    <ClInclude Include="SiteDAO.h" />
+    <ClInclude Include="SiteDlg.h" />
     <ClInclude Include="SiteView.h" />
     <ClInclude Include="HTRecorderManager.h" />
     <ClInclude Include="HTRecorderManagerDoc.h" />
@@ -111,11 +141,46 @@
     <ClInclude Include="OutputWnd.h" />
     <ClInclude Include="PropertiesWnd.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="sqlite3.h" />
+    <ClInclude Include="sqlite3ext.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StringUtil.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ViewTree.h" />
+    <ClInclude Include="XSleep.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DataAccessObject.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dx3d_gui.cpp" />
+    <ClCompile Include="dx3d_gui_button.cpp" />
+    <ClCompile Include="dx3d_gui_static.cpp" />
+    <ClCompile Include="HTNotificationReceiver.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="HTPlayBackStreamReceiver.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="RecorderDAO.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="RecorderDlg.cpp" />
+    <ClCompile Include="HTRecorderIF.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="HTRelayStreamReceiver.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="shell.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="SiteDAO.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="SiteDlg.cpp" />
     <ClCompile Include="SiteView.cpp" />
     <ClCompile Include="HTRecorderManager.cpp" />
     <ClCompile Include="HTRecorderManagerDoc.cpp" />
@@ -123,11 +188,16 @@
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="OutputWnd.cpp" />
     <ClCompile Include="PropertiesWnd.cpp" />
+    <ClCompile Include="sqlite3.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ViewTree.cpp" />
+    <ClCompile Include="XSleep.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="HTRecorderManager.rc" />

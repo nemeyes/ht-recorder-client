@@ -201,6 +201,7 @@ void CHTRecorderManagerApp::PreLoadState()
 	GetContextMenuManager()->AddMenu(L"Root", IDR_POPUP_ROOT);
 	GetContextMenuManager()->AddMenu(L"Sites", IDR_POPUP_SITES);
 	GetContextMenuManager()->AddMenu(L"Recorders", IDR_POPUP_RECORDER);
+	GetContextMenuManager()->AddMenu(L"Cameras", IDR_POPUP_CAMERA);
 }
 
 void CHTRecorderManagerApp::LoadCustomState()

@@ -2,6 +2,8 @@
 #pragma once
 
 #include "ViewTree.h"
+#include "Entities.h"
+#include <map>
 
 class CSiteViewToolBar : public CMFCToolBar
 {
@@ -29,8 +31,12 @@ protected:
 	CImageList m_FileViewImages;
 	CSiteViewToolBar m_wndToolBar;
 
+	SITE_T ** m_sites;
+	int m_sitesCount;
+
 protected:
 	void FillSiteView();
+	void RemoveAllSites();
 
 // Implementation
 public:
@@ -43,13 +49,16 @@ protected:
 	afx_msg void OnProperties();
 	afx_msg void OnAddSite();
 	afx_msg void OnRemoveSite();
+	afx_msg void OnAddRecorder();
+	afx_msg void OnRemoveRecorder();
+	afx_msg void OnAddCamera();
+	afx_msg void OnRemoveCamera();
+	afx_msg void OnStartRecording();
+	afx_msg void OnStopRecording();
+	afx_msg void OnPlayRelay();
+	afx_msg void OnPlayPlayback();
 
-	afx_msg void OnFileOpen();
-	afx_msg void OnFileOpenWith();
-	afx_msg void OnDummyCompile();
-	afx_msg void OnEditCut();
-	afx_msg void OnEditCopy();
-	afx_msg void OnEditClear();
+
 	afx_msg void OnPaint();
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 

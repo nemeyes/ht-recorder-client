@@ -17,7 +17,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Korean (Korea) resources
+// 한국어(대한민국) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
@@ -74,7 +74,7 @@ IDR_POPUP_SITES MENU
 BEGIN
     POPUP "SITE"
     BEGIN
-        MENUITEM "Remove Site",                 ID_REMOVE_SITE
+        MENUITEM "Remove",                      ID_REMOVE_SITE
         MENUITEM "Add Recorder",                ID_ADD_RECORDER
     END
 END
@@ -91,17 +91,108 @@ IDR_POPUP_RECORDER MENU
 BEGIN
     POPUP "RECORDER"
     BEGIN
-        MENUITEM "Remove Recorder",             ID_RECORDER_ADDCAMERA
-        MENUITEM "Add Camera",                  ID_RECORDER_ADDCAMERA32780
+        MENUITEM "Remove",                      ID_REMOVE_RECORDER
+        MENUITEM "Add Camera",                  ID_ADD_CAMERA
+        MENUITEM "Start Recording",             ID_START_RECORDING
+        MENUITEM "Stop Recording",              ID_STOP_RECORDING
     END
 END
 
-#endif    // Korean (Korea) resources
+IDR_POPUP_CAMERA MENU
+BEGIN
+    POPUP "CAMERA"
+    BEGIN
+        MENUITEM "Play Relay Stream",           ID_PLAY_RELAY
+        MENUITEM "Play PlayBack Stream",        ID_PLAY_PLAYBACK
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_SITEDLG DIALOGEX 0, 0, 311, 71
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Add Site"
+FONT 9, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "확인",IDOK,202,50,50,14
+    PUSHBUTTON      "취소",IDCANCEL,254,50,50,14
+    LTEXT           "Site UUID : ",IDC_STATIC,15,15,38,8
+    LTEXT           "Site Name : ",IDC_STATIC,15,32,40,8
+    EDITTEXT        IDC_EDIT_SITE_UUID,58,12,192,14,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Generate",IDC_BUTTON_GENERATE_SITE_UUID,254,12,50,14
+    EDITTEXT        IDC_EDIT_SITE_NAME,58,29,192,14,ES_AUTOHSCROLL
+END
+
+IDD_RECORDERDLG DIALOGEX 0, 0, 365, 122
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Add Recorder"
+FONT 9, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "확인",IDOK,200,101,78,14
+    PUSHBUTTON      "취소",IDCANCEL,280,101,78,14
+    LTEXT           "Recorder UUID : ",IDC_STATIC,15,15,54,8
+    LTEXT           "Recorder Name : ",IDC_STATIC,15,32,56,8
+    LTEXT           "Recorder Address : ",IDC_STATIC,15,49,63,8
+    LTEXT           "Recorder Username : ",IDC_STATIC,15,67,69,8
+    LTEXT           "Recorder Password : ",IDC_STATIC,15,84,67,8
+    EDITTEXT        IDC_EDIT_RECORDER_UUID,85,12,190,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_RECORDER_NAME,85,29,190,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_RECORDER_ADDRESS,85,46,190,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_RECORDER_USERNAME,85,64,190,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_RECORDER_PASSWORD,85,81,190,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Generate UUID",IDC_BUTTON_GENERATE_UUID,280,12,78,14
+END
+
+IDD_DISPLAY_FORMVIEW DIALOGEX 0, 0, 242, 181
+STYLE DS_SETFONT | WS_CHILD
+FONT 9, "굴림", 400, 0, 0x0
+BEGIN
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_SITEDLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 304
+        VERTGUIDE, 15
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 64
+    END
+
+    IDD_RECORDERDLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 358
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 115
+    END
+
+    IDD_DISPLAY_FORMVIEW, DIALOG
+    BEGIN
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // 한국어(대한민국) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// English (United States) resources
+// 영어(미국) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -189,23 +280,6 @@ BEGIN
     END
 END
 
-IDR_POPUP_EXPLORER MENU
-BEGIN
-    POPUP "Explorer"
-    BEGIN
-        MENUITEM "&Open",                       ID_OPEN
-        MENUITEM "Open &With....",              ID_OPEN_WITH
-        MENUITEM SEPARATOR
-        MENUITEM "&Compile",                    ID_DUMMY_COMPILE
-        MENUITEM SEPARATOR
-        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
-        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
-        MENUITEM "&Remove",                     ID_EDIT_CLEAR
-        MENUITEM SEPARATOR
-        MENUITEM "&Properties...",              ID_PROPERTIES
-    END
-END
-
 IDR_OUTPUT_POPUP MENU
 BEGIN
     POPUP "Popup"
@@ -230,6 +304,42 @@ BEGIN
     MENUITEM "Office 2007 (&Aqua Style)",   ID_VIEW_APPLOOK_OFF_2007_AQUA
     MENUITEM "Win&dows 7",                  ID_VIEW_APPLOOK_WINDOWS_7
 END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About HTRecorderManager"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
+    LTEXT           "HTRecorderManager, Version 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2015",IDC_STATIC,42,26,114,8
+    DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 163
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 55
+    END
+END
+#endif    // APSTUDIO_INVOKED
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -363,23 +473,6 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Dialog
-//
-
-IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About HTRecorderManager"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
-    LTEXT           "HTRecorderManager, Version 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2015",IDC_STATIC,42,26,114,8
-    DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Version
 //
 
@@ -398,15 +491,15 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904B0"
+        BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "TODO: <Company name>"
-            VALUE "FileDescription", "HTRecorderManager"
+            VALUE "CompanyName", "DebugerKing"
+            VALUE "FileDescription", "Recorder Monitoring System"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "HTRecorderManager.exe"
-            VALUE "LegalCopyright", "TODO: (c) <Company name>.  All rights reserved."
+            VALUE "LegalCopyright", "(c) DebugerKing.  All rights reserved."
             VALUE "OriginalFilename", "HTRecorderManager.exe"
-            VALUE "ProductName", "TODO: <Product name>"
+            VALUE "ProductName", "Recorder Monitoring System"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END
@@ -415,25 +508,6 @@ BEGIN
         VALUE "Translation", 0x409, 1200
     END
 END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO
-BEGIN
-    IDD_ABOUTBOX, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 163
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 55
-    END
-END
-#endif    // APSTUDIO_INVOKED
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -453,7 +527,7 @@ END
 
 STRINGTABLE
 BEGIN
-    AFX_IDS_APP_TITLE       "HTRecorderManager"
+    AFX_IDS_APP_TITLE       "Recorder Monitoring System"
     AFX_IDS_IDLEMESSAGE     "Ready"
 END
 
@@ -595,7 +669,7 @@ BEGIN
     IDS_FIND_TAB            "Find"
 END
 
-#endif    // English (United States) resources
+#endif    // 영어(미국) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

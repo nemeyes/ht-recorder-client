@@ -13,6 +13,39 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\db">
+      <UniqueIdentifier>{122c7c11-ded0-4bc4-95ce-b2025a197dfc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\db">
+      <UniqueIdentifier>{99c16abc-ee2d-41e2-9c81-0b133f26383d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\entity">
+      <UniqueIdentifier>{776c5c30-4f64-4b42-8199-3da77754ec08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\misc">
+      <UniqueIdentifier>{8b70b660-2d6a-4712-b234-d1d9a91bd99b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\recorder">
+      <UniqueIdentifier>{451d9bbd-7a9b-4663-9e17-d3bc3bc3cf45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\recorder">
+      <UniqueIdentifier>{fbc58a50-8884-434e-813c-2fa356109645}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\misc">
+      <UniqueIdentifier>{ad13ed4a-56e8-4cd3-bd03-19aa0a7692fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\video">
+      <UniqueIdentifier>{734d57fc-d4d3-49db-bec8-e88f98d392a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\video">
+      <UniqueIdentifier>{5584ee39-0ffa-45cc-b885-7fddf6eeee4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\dx3d">
+      <UniqueIdentifier>{3ec230b8-29d3-4802-919c-4e94fed77b3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\dx3d">
+      <UniqueIdentifier>{e1ea975c-c3a2-4e8d-a03a-c5ad96ae7d29}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -51,6 +84,75 @@
     <ClInclude Include="SiteView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sqlite3.h">
+      <Filter>Header Files\db</Filter>
+    </ClInclude>
+    <ClInclude Include="sqlite3ext.h">
+      <Filter>Header Files\db</Filter>
+    </ClInclude>
+    <ClInclude Include="DataAccessObject.h">
+      <Filter>Header Files\db</Filter>
+    </ClInclude>
+    <ClInclude Include="SiteDAO.h">
+      <Filter>Header Files\db</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities.h">
+      <Filter>Header Files\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="RecorderDAO.h">
+      <Filter>Header Files\db</Filter>
+    </ClInclude>
+    <ClInclude Include="SiteDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GUIDGenerator.h">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtil.h">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="RecorderDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HTRecorderIF.h">
+      <Filter>Header Files\recorder</Filter>
+    </ClInclude>
+    <ClInclude Include="ScopedLock.h">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="HTNotificationReceiver.h">
+      <Filter>Header Files\recorder</Filter>
+    </ClInclude>
+    <ClInclude Include="XSleep.h">
+      <Filter>Header Files\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="HTPlayBackStreamReceiver.h">
+      <Filter>Header Files\recorder</Filter>
+    </ClInclude>
+    <ClInclude Include="HTRelayStreamReceiver.h">
+      <Filter>Header Files\recorder</Filter>
+    </ClInclude>
+    <ClInclude Include="HTRecorderFactory.h">
+      <Filter>Header Files\recorder</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplayLib.h">
+      <Filter>Header Files\video</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DRender.h">
+      <Filter>Header Files\video</Filter>
+    </ClInclude>
+    <ClInclude Include="dx3d_gui.h">
+      <Filter>Header Files\dx3d</Filter>
+    </ClInclude>
+    <ClInclude Include="dx3d_gui_button.h">
+      <Filter>Header Files\dx3d</Filter>
+    </ClInclude>
+    <ClInclude Include="dx3d_gui_static.h">
+      <Filter>Header Files\dx3d</Filter>
+    </ClInclude>
+    <ClInclude Include="GrowableArray.hpp">
+      <Filter>Header Files\dx3d</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTRecorderManager.cpp">
@@ -79,6 +181,51 @@
     </ClCompile>
     <ClCompile Include="SiteView.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shell.c">
+      <Filter>Source Files\db</Filter>
+    </ClCompile>
+    <ClCompile Include="sqlite3.c">
+      <Filter>Source Files\db</Filter>
+    </ClCompile>
+    <ClCompile Include="DataAccessObject.cpp">
+      <Filter>Source Files\db</Filter>
+    </ClCompile>
+    <ClCompile Include="SiteDAO.cpp">
+      <Filter>Source Files\db</Filter>
+    </ClCompile>
+    <ClCompile Include="RecorderDAO.cpp">
+      <Filter>Source Files\db</Filter>
+    </ClCompile>
+    <ClCompile Include="SiteDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RecorderDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HTRecorderIF.cpp">
+      <Filter>Source Files\recorder</Filter>
+    </ClCompile>
+    <ClCompile Include="HTNotificationReceiver.cpp">
+      <Filter>Source Files\recorder</Filter>
+    </ClCompile>
+    <ClCompile Include="XSleep.cpp">
+      <Filter>Source Files\misc</Filter>
+    </ClCompile>
+    <ClCompile Include="HTPlayBackStreamReceiver.cpp">
+      <Filter>Source Files\recorder</Filter>
+    </ClCompile>
+    <ClCompile Include="HTRelayStreamReceiver.cpp">
+      <Filter>Source Files\recorder</Filter>
+    </ClCompile>
+    <ClCompile Include="dx3d_gui.cpp">
+      <Filter>Source Files\dx3d</Filter>
+    </ClCompile>
+    <ClCompile Include="dx3d_gui_button.cpp">
+      <Filter>Source Files\dx3d</Filter>
+    </ClCompile>
+    <ClCompile Include="dx3d_gui_static.cpp">
+      <Filter>Source Files\dx3d</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
