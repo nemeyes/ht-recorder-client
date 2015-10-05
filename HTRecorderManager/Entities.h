@@ -35,6 +35,7 @@ typedef struct _CAMERA_T : public _TREE_T
 {
 	RECORDER_T * parent;
 	wchar_t uuid[200];
+	unsigned char key[8];
 	wchar_t address[200];
 	wchar_t username[200];
 	wchar_t pwd[200];

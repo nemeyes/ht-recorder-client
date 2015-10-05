@@ -4,6 +4,8 @@
 #include <LiveSession5.h>
 #include <LiveSessionDLL.h>
 
+#include "DisplayLib.h"
+
 enum _exportRecordFile
 {
 	RECORDER_EXPORT_OK = 0,
@@ -81,7 +83,7 @@ public:
 	HTRecorder * GetRecorder(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, UINT nRetryCount=0);
 	BOOL IsRecording(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
 
-	BOOL StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
+	BOOL StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, CDisplayLib * pVideoView, unsigned char * key, size_t nChannel);
 	BOOL StopRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
 
 private:

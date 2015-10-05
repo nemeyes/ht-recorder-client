@@ -31,6 +31,9 @@ protected: // create from serialization only
 public:
 	CHTRecorderManagerDoc* GetDocument() const;
 
+	BOOL StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, unsigned char * key, size_t nChannel);
+	BOOL StopRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
+
 private:
 	CDisplayLib * m_pVideoView;
 	LPD3DXLINE m_pD3DLine;

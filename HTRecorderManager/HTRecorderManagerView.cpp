@@ -11,6 +11,7 @@
 
 #include "HTRecorderManagerDoc.h"
 #include "HTRecorderManagerView.h"
+#include "HTRecorderFactory.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -46,6 +47,17 @@ CHTRecorderManagerView::CHTRecorderManagerView()
 
 CHTRecorderManagerView::~CHTRecorderManagerView()
 {
+}
+
+
+BOOL CHTRecorderManagerView::StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, unsigned char * key, size_t nChannel)
+{
+	return HTRecorderFactory::GetInstance().StartRelay(strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword, strCameraUuid, m_pVideoView, key, nChannel);
+}
+
+BOOL CHTRecorderManagerView::StopRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid)
+{
+	return HTRecorderFactory::GetInstance().StopRelay(strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword, strCameraUuid);
 }
 
 BOOL CHTRecorderManagerView::PreCreateWindow(CREATESTRUCT& cs)

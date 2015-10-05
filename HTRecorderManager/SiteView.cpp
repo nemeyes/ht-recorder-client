@@ -10,6 +10,8 @@
 #include "RecorderDlg.h"
 
 #include "HTRecorderFactory.h"
+#include "HTRecorderManagerDoc.h"
+#include "HTRecorderManagerView.h"
 
 #define TREE_LEVEL_ROOT 0
 #define TREE_LEVEL_SITE 1
@@ -180,12 +182,16 @@ void CSiteView::FillSiteView()
 					m_sites[index]->recorders[recorderIndex]->cameras = static_cast<CAMERA_T**>(malloc(rsDeviceInfos.validDeviceCount*sizeof(CAMERA_T*)));
 					for (int camIndex = 0; camIndex < rsDeviceInfos.validDeviceCount; camIndex++)
 					{
-						CString strAddress = rsDeviceInfos.deviceInfo[camIndex].GetURL();
 						CString strUuid = rsDeviceInfos.deviceInfo[camIndex].GetID();
+						//UINT keyid = rsDeviceInfos.deviceInfo[camIndex].GetKeyID();
+						CString strAddress = rsDeviceInfos.deviceInfo[camIndex].GetURL();
 						CString strUsername = rsDeviceInfos.deviceInfo[camIndex].GetUser();
 						CString strPassword = rsDeviceInfos.deviceInfo[camIndex].GetPassword();
 						m_sites[index]->recorders[recorderIndex]->cameras[camIndex] = static_cast<CAMERA_T*>(malloc(sizeof(CAMERA_T)));
 						wcscpy(m_sites[index]->recorders[recorderIndex]->cameras[camIndex]->uuid, strUuid);
+						memset(m_sites[index]->recorders[recorderIndex]->cameras[camIndex]->key, 0x00, sizeof(m_sites[index]->recorders[recorderIndex]->cameras[camIndex]->key));
+						m_sites[index]->recorders[recorderIndex]->cameras[camIndex]->key[7] = (BYTE)rsDeviceInfos.deviceInfo[camIndex].GetKeyID();
+
 						wcscpy(m_sites[index]->recorders[recorderIndex]->cameras[camIndex]->address, strAddress);
 						wcscpy(m_sites[index]->recorders[recorderIndex]->cameras[camIndex]->username, strUsername);
 						wcscpy(m_sites[index]->recorders[recorderIndex]->cameras[camIndex]->pwd, strPassword);
@@ -362,7 +368,16 @@ void CSiteView::OnStopRecording()
 
 void CSiteView::OnPlayRelay()
 {
-
+	CFrameWnd * pFrame = (CFrameWnd *)(AfxGetApp()->m_pMainWnd);
+	CHTRecorderManagerView * videoView = (CHTRecorderManagerView*)pFrame->GetActiveView();
+	if (videoView)
+	{
+		CTreeCtrl* pWndTree = (CTreeCtrl*)&m_wndSiteView;
+		HTREEITEM hTreeItem = pWndTree->GetSelectedItem();
+		CAMERA_T * camera = (CAMERA_T*)pWndTree->GetItemData(hTreeItem);
+		
+		videoView->StartRelay(camera->parent->uuid, camera->parent->address, camera->parent->username, camera->parent->pwd, camera->uuid, camera->key, 0);
+	}
 }
 
 void CSiteView::OnPlayPlayback()

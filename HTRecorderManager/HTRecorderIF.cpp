@@ -86,7 +86,7 @@ BOOL HTRecorderIF::IsRecording(CString strRecorderUuid, CString strRecorderAddre
 	return rsRecordingStatusList.recordingStatus[0].isRecording;
 }
 
-BOOL HTRecorderIF::StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid)
+BOOL HTRecorderIF::StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, CDisplayLib * pVideoView, unsigned char * key, size_t nChannel)
 {
 	HTRecorder * recorder = GetRecorder(strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword);
 	if (!recorder) 
@@ -100,8 +100,7 @@ BOOL HTRecorderIF::StartRelay(CString strRecorderUuid, CString strRecorderAddres
 		return FALSE;
 
 	rlRequest.pbFrameType = RS_RL_FRAME_ALL;
-	HTRelayStreamReceiver * rlStreamReceiver = new HTRelayStreamReceiver(recorder);
-	rlStreamReceiver->SetStreamInfo(rlDevice.GetID());
+	HTRelayStreamReceiver * rlStreamReceiver = new HTRelayStreamReceiver(recorder, strCameraUuid, pVideoView, key, nChannel);
 	rlRequest.pReceiver = rlStreamReceiver;
 	rlStreamReceiver->Start();
 	value = recorder->StartRelay(&rlDevice, &rlRequest);
