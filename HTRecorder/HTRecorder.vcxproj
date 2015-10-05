@@ -89,11 +89,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(SolutionDir)platform\$(Platform)\intermediate\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir>$(SolutionDir)platform\win32\x86\release\intermediate\$(ProjectName)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
-    <OutDir>$(ProjectDir)win32\bin\</OutDir>
-    <IncludePath>$(ProjectDir)common;$(ProjectDir)crypto;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)win32\lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)platform\win32\x86\release\bin\</OutDir>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)platform\win32\x86\release\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -173,7 +173,7 @@ xcopy /y $(ProjectDir)x64\bin\$(ProjectName)d.dll $(SolutionDir)Player2xx\x64\bi
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_AFXDLL;_AFXEXT;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;common;cryto</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>Common.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
@@ -184,7 +184,7 @@ xcopy /y $(ProjectDir)x64\bin\$(ProjectName)d.dll $(SolutionDir)Player2xx\x64\bi
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
-      <ImportLibrary>$(ProjectDir)win32\lib\$(ProjectName).lib</ImportLibrary>
+      <ImportLibrary>$(SolutionDir)platform\win32\x86\release\lib\$(ProjectName).lib</ImportLibrary>
       <AdditionalDependencies>LiveSession5.lib</AdditionalDependencies>
     </Link>
     <Midl>
@@ -197,8 +197,8 @@ xcopy /y $(ProjectDir)x64\bin\$(ProjectName)d.dll $(SolutionDir)Player2xx\x64\bi
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)win32\bin\$(ProjectName).dll $(SolutionDir)VMSHTRecorderSourceFilter\win32\bin\
-xcopy /y $(ProjectDir)win32\bin\$(ProjectName).dll $(SolutionDir)Player2xx\win32\bin\</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
