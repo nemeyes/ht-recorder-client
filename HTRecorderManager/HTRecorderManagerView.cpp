@@ -52,6 +52,7 @@ CHTRecorderManagerView::~CHTRecorderManagerView()
 
 BOOL CHTRecorderManagerView::StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, unsigned char * key, size_t nChannel)
 {
+	HTRecorderFactory::GetInstance().KillRelayStream();
 	return HTRecorderFactory::GetInstance().StartRelay(strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword, strCameraUuid, m_pVideoView, key, nChannel);
 }
 

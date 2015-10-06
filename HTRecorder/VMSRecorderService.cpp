@@ -317,7 +317,7 @@ BOOL ServiceCore::Connect( CONST CString& strAddress, CONST UINT nPort, CONST CS
 	conn.pReceiver		= this;
 	conn.pUserId		= user.c_str();
 	conn.pUserPassword	= pass.c_str();
-	conn.nVersion		= MAKE_LIVEVERSION( fileVersion, dbVersion );
+	conn.nVersion		= MAKE_LIVEVERSION(fileVersion, dbVersion);
 
 	_bIsConnecting = bAsync;
 

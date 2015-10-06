@@ -83,14 +83,16 @@ public:
 	HTRecorder * GetRecorder(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, UINT nRetryCount=0);
 	BOOL IsRecording(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
 
+	VOID KillRelayStream(VOID);
+	VOID KillPlayBackStream(VOID);
+
 	BOOL StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, CDisplayLib * pVideoView, unsigned char * key, size_t nChannel);
 	BOOL StopRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
 
 private:
 	HTRecorder * GetRecorder(RS_SERVER_INFO_T * serverInfo, UINT nRetryCount=0);
 	BOOL MakeDeviceInfo(CString strCameraUuid, RS_DEVICE_INFO_T * rsDeviceInfo);
-	VOID KillRelayStream(VOID);
-	VOID KillPlayBackStream(VOID);
+
 
 	/*
 	BOOL	StartPlayback( RecStreamRequstInfo *vcamInfo );

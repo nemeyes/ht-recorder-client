@@ -304,8 +304,7 @@ private:
 #define RS_DEFAULT_SERVICE_PORT		11550	// Nautilus 레코딩 서버 기본 Port
 
 #define RS_FILE_VERSION				10300
-#define RS_DB_VERSION				4
-//#define RS_DB_VERSION				2
+#define RS_DB_VERSION				5
 
 #define RS_MAX_RECORDER				(32)
 #define	RS_MAX_DEVICE				(64)

@@ -41,7 +41,7 @@
 #define MAX_LIVE_CHANNEL (64)
 #define DEFAULT_NCSERVICE_PORT				11550	// Nautilus 레코딩 서버 기본 Port
 #define NAUTILUS_FILE_VERSION				10300
-#define NAUTILUS_DB_VERSION					2
+#define NAUTILUS_DB_VERSION					5
 
 #include <process.h>
 #include <map>
