@@ -28,7 +28,12 @@ HTRelayStreamReceiver::HTRelayStreamReceiver(HTRecorder * service, CString strCa
 
 	_snprintf(m_strKey, sizeof(m_strKey), "%02X%02X%02X%02X%02X%02X%02X%02X", m_key[0], m_key[1], m_key[2], m_key[3], m_key[4], m_key[5], m_key[6], m_key[7]);
 	m_Decode.AddCallbackFunction(m_strKey, (HDISPLIB)m_pVideoView, nChannel);
-	m_pVideoView->SetPreview(nChannel);
+
+	m_pVideoView->SetBackgroundColor(RGB(0x00, 0x00, 0x00));
+	m_pVideoView->SetChannelBackground(1, D3DCOLOR_ARGB(0xFF, 0x00, 0x00, 0x00));
+	//m_pVideoView->SetPreview(nChannel, strCameraUuid);
+	//m_pVideoView->SetEnableBackgroundImage(TRUE);
+	//m_pVideoView->SetBackgroundImage(_T("images\\bg.png"), );
 }
 
 HTRelayStreamReceiver::~HTRelayStreamReceiver( VOID )
