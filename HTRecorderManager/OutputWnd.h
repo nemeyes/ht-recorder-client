@@ -35,14 +35,12 @@ public:
 protected:
 	CMFCTabCtrl	m_wndTabs;
 
-	COutputList m_wndOutputBuild;
-	COutputList m_wndOutputDebug;
-	COutputList m_wndOutputFind;
+	COutputList m_wndOutputEvent;
+	COutputList m_wndOutputTimeline;
 
 protected:
-	void FillBuildWindow();
-	void FillDebugWindow();
-	void FillFindWindow();
+	void FillEventWindow();
+	void FillTimelineWindow();
 
 	void AdjustHorzScroll(CListBox& wndListBox);
 

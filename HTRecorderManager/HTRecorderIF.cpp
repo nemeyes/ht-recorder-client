@@ -10,9 +10,8 @@ UINT lastDayOfMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 HTRecorderIF::HTRecorderIF(BOOL bRunAsRecorder)
 	: m_bRunAsRecorder(bRunAsRecorder)
-	//, _exportReceiver(NULL)
 {
-	m_notifier = new HTNotificationReceiver();
+	//m_notifier = new HTNotificationReceiver();
 }
 
 HTRecorderIF::~HTRecorderIF(VOID)
@@ -34,7 +33,7 @@ HTRecorderIF::~HTRecorderIF(VOID)
 		m_mapRecorderList.clear();
 	}
 
-	delete m_notifier;
+	//delete m_notifier;
 
 	
 	/*if(m_pRecTime)

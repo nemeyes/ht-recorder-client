@@ -7,14 +7,16 @@ HTRelayStreamReceiver::HTRelayStreamReceiver(HTRecorder * service, CString strCa
 	, m_HTRecorder(service)
 	, m_relayUUID(strCameraUuid)
 	, m_pVideoView(pVideoView)
-	, m_pVideoExtraData(0)
+	, m_nVideoViewChannels(nChannel)
+	/*, m_pVideoExtraData(0)
 	, m_nVideoExtraDataSize(0)
 	, m_pAudioExtraData(0)
-	, m_nAudioExtraDataSize(0)
+	, m_nAudioExtraDataSize(0)*/
 	, m_bFindFirstKey(FALSE)
 {
-	m_Decode.SetVideoOutput(DISP_YUY2);
-	m_Decode.SetEnableDecodeMode(TRUE);
+	m_Decode.SetVideoOutput(DISP_YV12);
+	//m_Decode.SetEnableDecodeMode(TRUE);
+	m_Decode.SetDecodeMode(TRUE);
 
 	m_key[0] = key[0];
 	m_key[1] = key[1];
@@ -27,13 +29,13 @@ HTRelayStreamReceiver::HTRelayStreamReceiver(HTRecorder * service, CString strCa
 
 
 	_snprintf(m_strKey, sizeof(m_strKey), "%02X%02X%02X%02X%02X%02X%02X%02X", m_key[0], m_key[1], m_key[2], m_key[3], m_key[4], m_key[5], m_key[6], m_key[7]);
-	m_Decode.AddCallbackFunction(m_strKey, (HDISPLIB)m_pVideoView, nChannel);
-
-	m_pVideoView->SetBackgroundColor(RGB(0x00, 0x00, 0x00));
-	m_pVideoView->SetChannelBackground(1, D3DCOLOR_ARGB(0xFF, 0x00, 0x00, 0x00));
-	//m_pVideoView->SetPreview(nChannel, strCameraUuid);
+	m_Decode.AddCallbackFunction(m_strKey, (HDISPLIB)m_pVideoView, m_nVideoViewChannels);
+	//m_pVideoView->SetBackgroundColor(RGB(0x00, 0x00, 0x00));
+	//m_pVideoView->SetChannelBackground(1, D3DCOLOR_ARGB(0xFF, 0x00, 0x00, 0x00));
+	m_pVideoView->SetPreview(nChannel, L"Test");
+	m_pVideoView->SetEnableAspectratio(m_nVideoViewChannels, TRUE);
 	//m_pVideoView->SetEnableBackgroundImage(TRUE);
-	//m_pVideoView->SetBackgroundImage(_T("images\\bg.png"), );
+	//m_pVideoView->SetBackgroundImage(_T("images\\bg.png"), D3DCOLOR_ARGB(0xFF, 0x00, 0x00, 0x00));
 }
 
 HTRelayStreamReceiver::~HTRelayStreamReceiver( VOID )
@@ -42,7 +44,7 @@ HTRelayStreamReceiver::~HTRelayStreamReceiver( VOID )
 	m_Decode.RemoveCallbackFunctionAll();
 	m_Decode.Close();
 
-	if (m_pVideoExtraData)
+	/*if (m_pVideoExtraData)
 	{
 		free(m_pVideoExtraData);
 		m_pVideoExtraData = 0;
@@ -54,7 +56,7 @@ HTRelayStreamReceiver::~HTRelayStreamReceiver( VOID )
 	}
 
 	m_nVideoExtraDataSize = 0;
-	m_nAudioExtraDataSize = 0;
+	m_nAudioExtraDataSize = 0;*/
 }
 
 VOID HTRelayStreamReceiver::Start( VOID )
@@ -230,6 +232,7 @@ VOID HTRelayStreamReceiver::OnReceive( LPStreamData Data )
 					m_bFindFirstKey = TRUE;
 			}
 
+			//m_pVideoView->UpdateTime()
 			if (m_bFindFirstKey)
 				m_Decode.Process(p);
 			delete p;

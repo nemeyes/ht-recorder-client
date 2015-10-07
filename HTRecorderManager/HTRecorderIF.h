@@ -136,7 +136,7 @@ private:
 
 	std::map<CString,HTRecorder*>	m_mapRecorderList;
 	std::map<CString,CString>		m_mapCameraList;
-	HTNotificationReceiver	* m_notifier;
+	//HTNotificationReceiver	* m_notifier;
 
 	CCriticalSection	m_lockRecorder;
 	CCriticalSection	m_lockRelayReceiver;

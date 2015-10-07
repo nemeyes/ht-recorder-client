@@ -162,7 +162,7 @@ VOID IExportStreamReceiver::SetHandle( VOID *handle )
 	_handle = handle; 
 }
 
-HTRecorder::HTRecorder( INotificationReceiver *notifier )
+HTRecorder::HTRecorder( INotificationReceiver * notifier )
 	: _service(NULL)
 	, _liveSession(NULL)
 	, _UUID(NULL)

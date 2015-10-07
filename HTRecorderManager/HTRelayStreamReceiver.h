@@ -31,11 +31,12 @@ private:
 	BOOL m_bConntected;
 	BOOL m_bRun;
 
-	BYTE * m_pVideoExtraData;
+
+	/*BYTE * m_pVideoExtraData;
 	int m_nVideoExtraDataSize;
 
 	BYTE * m_pAudioExtraData;
-	int m_nAudioExtraDataSize;
+	int m_nAudioExtraDataSize;*/
 
 	AVMEDIA_TYPE m_nVideoType;
 	AVMEDIA_TYPE m_nAudioType;
@@ -43,6 +44,7 @@ private:
 
 	CDecoder m_Decode;
 	CDisplayLib * m_pVideoView;
+	int m_nVideoViewChannels;
 
 	BOOL m_bFindFirstKey;
 
