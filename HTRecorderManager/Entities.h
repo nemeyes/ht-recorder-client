@@ -40,3 +40,34 @@ typedef struct _CAMERA_T : public _TREE_T
 	wchar_t username[200];
 	wchar_t pwd[200];
 } CAMERA_T;
+
+/*
+void OnConnectionStop(RS_CONNECTION_STOP_NOTIFICATION_T * notification);
+void OnRecordingStorageFull(RS_STORAGE_FULL_NOTIFICATION_T * notification);
+void OnReservedStorageFull(RS_STORAGE_FULL_NOTIFICATION_T * notification);
+void OnOverwritingError(RS_OVERWRITE_ERROR_NOTIFICATION_T * notification);
+void OnConfigurationChanged(RS_CONFIGURATION_CHANGED_NOTIFICATION_T * notification);
+void OnPlaybackError(RS_PLAYBACK_ERROR_NOTIFICATION_T * notification);
+void OnDiskError(RS_DISK_ERROR_NOTIFICATION_T * notification);
+void OnKeyFrameMode(RS_KEY_FRAME_MODE_NOTIFICATION_T * notification);
+void OnBufferClean(RS_BUFFER_CLEAN_NOTIFICATION_T * notification);
+*/
+
+#define CATEGORY_SYSTEM 0
+#define CATEGORY_STORAGE 1
+#define CATEGORY_PLAYBACK 2
+
+#define LEVEL_INFO 0
+#define LEVEL_WARNING 1
+#define LEVEL_CIRITICAL 2
+
+typedef struct _STATUS_LOG_T
+{
+	wchar_t uuid[200];
+	int seq;
+	int dt;
+	int level;
+	int category;
+	int resid;
+	wchar_t contents[500];
+} STATUS_LOG_T;

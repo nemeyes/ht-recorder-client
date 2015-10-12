@@ -9,7 +9,7 @@ public:
 	explicit RecorderDAO(void);
 	virtual ~RecorderDAO(void);
 
-	int RetrieveRecorder(SITE_T * site, RECORDER_T *** recorders, int & count, sqlite3 * connection = 0);
+	int RetrieveRecorders(SITE_T * site, RECORDER_T *** recorders, int & count, sqlite3 * connection = 0);
 	int CreateRecorder(SITE_T * site, RECORDER_T * recorder, sqlite3 * connection = 0);
 	int DeleteRecorder(SITE_T * site, RECORDER_T * recorder, sqlite3 * connection = 0);
 

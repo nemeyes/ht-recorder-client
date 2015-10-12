@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HTRecorderClient", "HTRecorderClient\HTRecorderClient.vcxproj", "{2D62C791-C055-48CB-9DE6-BD0A77E4D8B9}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HTRecorderManager", "HTRecorderManager\HTRecorderManager.vcxproj", "{F8213ADF-8F6C-4B92-8AA2-00319751AC08}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HTRecorder", "HTRecorder\HTRecorder.vcxproj", "{AFA3C09E-4256-4629-8618-A9138ED41232}"
@@ -19,14 +17,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2D62C791-C055-48CB-9DE6-BD0A77E4D8B9}.Debug|ARM.ActiveCfg = Debug|Win32
-		{2D62C791-C055-48CB-9DE6-BD0A77E4D8B9}.Debug|Win32.ActiveCfg = Debug|Win32
-		{2D62C791-C055-48CB-9DE6-BD0A77E4D8B9}.Debug|Win32.Build.0 = Debug|Win32
-		{2D62C791-C055-48CB-9DE6-BD0A77E4D8B9}.Debug|x64.ActiveCfg = Debug|Win32
-		{2D62C791-C055-48CB-9DE6-BD0A77E4D8B9}.Release|ARM.ActiveCfg = Release|Win32
-		{2D62C791-C055-48CB-9DE6-BD0A77E4D8B9}.Release|Win32.ActiveCfg = Release|Win32
-		{2D62C791-C055-48CB-9DE6-BD0A77E4D8B9}.Release|Win32.Build.0 = Release|Win32
-		{2D62C791-C055-48CB-9DE6-BD0A77E4D8B9}.Release|x64.ActiveCfg = Release|Win32
 		{F8213ADF-8F6C-4B92-8AA2-00319751AC08}.Debug|ARM.ActiveCfg = Debug|Win32
 		{F8213ADF-8F6C-4B92-8AA2-00319751AC08}.Debug|Win32.ActiveCfg = Debug|Win32
 		{F8213ADF-8F6C-4B92-8AA2-00319751AC08}.Debug|Win32.Build.0 = Debug|Win32

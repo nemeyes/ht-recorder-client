@@ -5,6 +5,8 @@
 #include "Resource.h"
 #include "MainFrm.h"
 
+#include "HTNotificationReceiverFactory.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -63,6 +65,8 @@ int COutputWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	FillEventWindow();
 	FillTimelineWindow();
 
+	HTNotificationReceiverFactory::GetInstance().SetEventListWindow(this);
+
 	return 0;
 }
 
@@ -95,13 +99,15 @@ void COutputWnd::AdjustHorzScroll(CListBox& wndListBox)
 
 void COutputWnd::FillEventWindow()
 {
-	//m_wndOutputBuild.AddString(_T("Record Event is being displayed here."));
-	//m_wndOutputBuild.AddString(_T("The output is being displayed in rows of a list view"));
 }
 
 void COutputWnd::FillTimelineWindow()
 {
+}
 
+void COutputWnd::AddString2OutputEvent(CString message)
+{
+	m_wndOutputEvent.AddString(message);
 }
 
 void COutputWnd::UpdateFonts()

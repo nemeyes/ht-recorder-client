@@ -6,7 +6,7 @@ class HTRecorderFactory
 public:
 	static HTRecorderIF & GetInstance()
 	{
-		static HTRecorderIF instance;
+		static HTRecorderIF instance(FALSE);
 		return instance;
 	}
 

@@ -28,7 +28,7 @@ public:
 protected:
 
 	CViewTree m_wndSiteView;
-	CImageList m_FileViewImages;
+	CImageList m_SiteViewImages;
 	CSiteViewToolBar m_wndToolBar;
 
 	SITE_T ** m_sites;

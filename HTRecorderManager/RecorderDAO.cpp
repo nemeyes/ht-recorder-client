@@ -13,7 +13,7 @@ RecorderDAO::~RecorderDAO(void)
 
 }
 
-int RecorderDAO::RetrieveRecorder(SITE_T * site, RECORDER_T *** recorders, int & count, sqlite3 * connection)
+int RecorderDAO::RetrieveRecorders(SITE_T * site, RECORDER_T *** recorders, int & count, sqlite3 * connection)
 {
 	int value = DAO_FAIL;
 	sqlite3_stmt *stmt;

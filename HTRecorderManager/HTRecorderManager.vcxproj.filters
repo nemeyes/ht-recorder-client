@@ -153,6 +153,12 @@
     <ClInclude Include="GrowableArray.hpp">
       <Filter>Header Files\dx3d</Filter>
     </ClInclude>
+    <ClInclude Include="HTNotificationReceiverFactory.h">
+      <Filter>Header Files\recorder</Filter>
+    </ClInclude>
+    <ClInclude Include="StatusLogDAO.h">
+      <Filter>Header Files\db</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTRecorderManager.cpp">
@@ -226,6 +232,9 @@
     </ClCompile>
     <ClCompile Include="dx3d_gui_static.cpp">
       <Filter>Source Files\dx3d</Filter>
+    </ClCompile>
+    <ClCompile Include="StatusLogDAO.cpp">
+      <Filter>Source Files\db</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

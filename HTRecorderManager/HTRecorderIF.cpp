@@ -54,19 +54,20 @@ HTRecorderIF::~HTRecorderIF(VOID)
 	}*/
 }
 
-HTRecorder * HTRecorderIF::GetRecorder(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, UINT nRetryCount)
+HTRecorder * HTRecorderIF::GetRecorder(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, UINT nRetryCount)
 {
+	notifier->SetRecorderAddress((LPWSTR)(LPCWSTR)strRecorderAddress);
 	RS_SERVER_INFO_T rsServerInfo;
 	rsServerInfo.strServerId = strRecorderUuid;
 	rsServerInfo.strAddress = strRecorderAddress;
 	rsServerInfo.strUserId = strRecorderUsername;
 	rsServerInfo.strUserPassword = strRecorderPassword;
-	return GetRecorder(&rsServerInfo, nRetryCount);
+	return GetRecorder(notifier, &rsServerInfo, nRetryCount);
 }
 
-BOOL HTRecorderIF::IsRecording(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid)
+BOOL HTRecorderIF::IsRecording(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid)
 {
-	HTRecorder * recorder = GetRecorder(strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword);
+	HTRecorder * recorder = GetRecorder(notifier, strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword);
 	if (!recorder) 
 		return FALSE;
 
@@ -85,9 +86,9 @@ BOOL HTRecorderIF::IsRecording(CString strRecorderUuid, CString strRecorderAddre
 	return rsRecordingStatusList.recordingStatus[0].isRecording;
 }
 
-BOOL HTRecorderIF::StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, CDisplayLib * pVideoView, unsigned char * key, size_t nChannel)
+BOOL HTRecorderIF::StartRelay(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, CDisplayLib * pVideoView, unsigned char * key, size_t nChannel)
 {
-	HTRecorder * recorder = GetRecorder(strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword);
+	HTRecorder * recorder = GetRecorder(notifier, strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword);
 	if (!recorder) 
 		return FALSE;
 
@@ -160,7 +161,7 @@ BOOL HTRecorderIF::StartRelay(CString strRecorderUuid, CString strRecorderAddres
 	return value;
 }
 
-BOOL HTRecorderIF::StopRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid)
+BOOL HTRecorderIF::StopRelay(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid)
 {
 	BOOL value = TRUE;
 	RS_DEVICE_INFO_T	rlDevice;
@@ -201,7 +202,7 @@ BOOL HTRecorderIF::StopRelay(CString strRecorderUuid, CString strRecorderAddress
 
 
 //private function
-HTRecorder * HTRecorderIF::GetRecorder(RS_SERVER_INFO_T * serverInfo, UINT nRetryCount)
+HTRecorder * HTRecorderIF::GetRecorder(HTNotificationReceiver * notifier, RS_SERVER_INFO_T * serverInfo, UINT nRetryCount)
 {
 	if (serverInfo->strAddress.GetLength() < 1)
 		return NULL;
@@ -216,7 +217,7 @@ HTRecorder * HTRecorderIF::GetRecorder(RS_SERVER_INFO_T * serverInfo, UINT nRetr
 	{
 		TRACE("connect new list \n");
 
-		HTRecorder * recorder = new HTRecorder(m_notifier);
+		HTRecorder * recorder = new HTRecorder(notifier);
 		BOOL isConnected = recorder->IsConnected();
 		if (!isConnected)
 		{

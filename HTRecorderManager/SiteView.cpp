@@ -12,6 +12,7 @@
 #include "HTRecorderFactory.h"
 #include "HTRecorderManagerDoc.h"
 #include "HTRecorderManagerView.h"
+#include "HTNotificationReceiverFactory.h"
 
 #define TREE_LEVEL_ROOT 0
 #define TREE_LEVEL_SITE 1
@@ -80,8 +81,8 @@ int CSiteView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 
 	// Load view images:
-	m_FileViewImages.Create(IDB_SITE_VIEW, 16, 0, RGB(255, 255, 255));
-	m_wndSiteView.SetImageList(&m_FileViewImages, TVSIL_NORMAL);
+	m_SiteViewImages.Create(IDB_SITE_VIEW, 16, 0, RGB(255, 255, 255));
+	m_wndSiteView.SetImageList(&m_SiteViewImages, TVSIL_NORMAL);
 
 	m_wndToolBar.Create(this, AFX_DEFAULT_TOOLBAR_STYLE, IDR_EXPLORER);
 	m_wndToolBar.LoadToolBar(IDR_EXPLORER, 0, 0, TRUE /* Is locked */);
@@ -145,7 +146,6 @@ void CSiteView::FillSiteView()
 	m_wndSiteView.DeleteAllItems();
 	RemoveAllSites();
 
-
 	HTREEITEM hTreeRoot = m_wndSiteView.InsertItem(_T("부산교통공사1호선"), 0, 0);
 	m_wndSiteView.SetItemState(hTreeRoot, TVIS_BOLD, TVIS_BOLD);
 
@@ -160,7 +160,7 @@ void CSiteView::FillSiteView()
 		m_sites[index]->recorders = 0;
 		m_sites[index]->recordersCount = 0;
 		RecorderDAO recorderDao;
-		recorderDao.RetrieveRecorder(m_sites[index], &(m_sites[index]->recorders), m_sites[index]->recordersCount);
+		recorderDao.RetrieveRecorders(m_sites[index], &(m_sites[index]->recorders), m_sites[index]->recordersCount);
 
 		for (int recorderIndex = 0; recorderIndex < m_sites[index]->recordersCount; recorderIndex++)
 		{
@@ -172,7 +172,11 @@ void CSiteView::FillSiteView()
 			m_wndSiteView.SetItemData(hTreeRecorder, (DWORD_PTR)m_sites[index]->recorders[recorderIndex]);
 
 
-			HTRecorder * recorder = HTRecorderFactory::GetInstance().GetRecorder(m_sites[index]->recorders[recorderIndex]->uuid, m_sites[index]->recorders[recorderIndex]->address, m_sites[index]->recorders[recorderIndex]->username, m_sites[index]->recorders[recorderIndex]->pwd);
+			HTRecorder * recorder = HTRecorderFactory::GetInstance().GetRecorder(&(HTNotificationReceiverFactory::GetInstance()), 
+																				 m_sites[index]->recorders[recorderIndex]->uuid, 
+																				 m_sites[index]->recorders[recorderIndex]->address, 
+																				 m_sites[index]->recorders[recorderIndex]->username, 
+																				 m_sites[index]->recorders[recorderIndex]->pwd);
 			if (recorder)
 			{
 				RS_DEVICE_INFO_SET_T rsDeviceInfos;
@@ -206,41 +210,7 @@ void CSiteView::FillSiteView()
 			}
 		}
 	}
-
-
-	/*HTREEITEM hSite = m_wndSiteView.InsertItem(_T("신평"), 1, 1, hRoot);
-	m_wndSiteView.SetItemData(hSite, 1);
-	
-	HTREEITEM hRecorder = m_wndSiteView.InsertItem(_T("녹화서버1"), 2, 2, hSite);
-	m_wndSiteView.SetItemData(hRecorder, 2);
-	hRecorder = m_wndSiteView.InsertItem(_T("녹화서버2"), 2, 2, hSite);
-	m_wndSiteView.SetItemData(hRecorder, 2);
-	hRecorder = m_wndSiteView.InsertItem(_T("녹화서버3"), 2, 2, hSite);
-	m_wndSiteView.SetItemData(hRecorder, 2);
-	hRecorder = m_wndSiteView.InsertItem(_T("녹화서버4"), 2, 2, hSite);
-	m_wndSiteView.SetItemData(hRecorder, 2);
-
-	hSite = m_wndSiteView.InsertItem(_T("당리"), 1, 1, hRoot);
-
-	hRecorder = m_wndSiteView.InsertItem(_T("녹화서버5"), 2, 2, hSite);
-	m_wndSiteView.SetItemData(hRecorder, 2);
-	hRecorder = m_wndSiteView.InsertItem(_T("녹화서버6"), 2, 2, hSite);
-	m_wndSiteView.SetItemData(hRecorder, 2);
-	hRecorder = m_wndSiteView.InsertItem(_T("녹화서버7"), 2, 2, hSite);
-	m_wndSiteView.SetItemData(hRecorder, 2);
-
-
-
-	/*HTREEITEM hRes = m_wndSiteView.InsertItem(_T("FakeApp Resource Files"), 0, 0, hRoot);
-
-	m_wndSiteView.InsertItem(_T("FakeApp.ico"), 2, 2, hRes);
-	m_wndSiteView.InsertItem(_T("FakeApp.rc2"), 2, 2, hRes);
-	m_wndSiteView.InsertItem(_T("FakeAppDoc.ico"), 2, 2, hRes);
-	m_wndSiteView.InsertItem(_T("FakeToolbar.bmp"), 2, 2, hRes);*/
-
 	m_wndSiteView.Expand(hTreeRoot, TVE_EXPAND);
-	//m_wndSiteView.Expand(hSrc, TVE_EXPAND);
-	//m_wndSiteView.Expand(hInc, TVE_EXPAND);
 }
 
 void CSiteView::OnContextMenu(CWnd* pWnd, CPoint point)
@@ -409,7 +379,7 @@ void CSiteView::OnChangeVisualStyle()
 	m_wndToolBar.CleanUpLockedImages();
 	m_wndToolBar.LoadBitmap(theApp.m_bHiColorIcons ? IDB_EXPLORER_24 : IDR_EXPLORER, 0, 0, TRUE /* Locked */);
 
-	m_FileViewImages.DeleteImageList();
+	m_SiteViewImages.DeleteImageList();
 
 	UINT uiBmpId = theApp.m_bHiColorIcons ? IDB_FILE_VIEW_24 : IDB_FILE_VIEW;
 
@@ -428,10 +398,10 @@ void CSiteView::OnChangeVisualStyle()
 
 	nFlags |= (theApp.m_bHiColorIcons) ? ILC_COLOR24 : ILC_COLOR4;
 
-	m_FileViewImages.Create(16, bmpObj.bmHeight, nFlags, 0, 0);
-	m_FileViewImages.Add(&bmp, RGB(255, 255, 255));
+	m_SiteViewImages.Create(16, bmpObj.bmHeight, nFlags, 0, 0);
+	m_SiteViewImages.Add(&bmp, RGB(255, 255, 255));
 
-	m_wndSiteView.SetImageList(&m_FileViewImages, TVSIL_NORMAL);
+	m_wndSiteView.SetImageList(&m_SiteViewImages, TVSIL_NORMAL);
 }
 
 

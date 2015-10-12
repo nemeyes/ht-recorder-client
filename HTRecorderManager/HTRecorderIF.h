@@ -80,17 +80,17 @@ public:
 	HTRecorderIF(BOOL bRunAsRecorder = FALSE);
 	~HTRecorderIF(VOID);
 
-	HTRecorder * GetRecorder(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, UINT nRetryCount=0);
-	BOOL IsRecording(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
+	HTRecorder * GetRecorder(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, UINT nRetryCount = 0);
+	BOOL IsRecording(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
 
 	VOID KillRelayStream(VOID);
 	VOID KillPlayBackStream(VOID);
 
-	BOOL StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, CDisplayLib * pVideoView, unsigned char * key, size_t nChannel);
-	BOOL StopRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
+	BOOL StartRelay(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, CDisplayLib * pVideoView, unsigned char * key, size_t nChannel);
+	BOOL StopRelay(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
 
 private:
-	HTRecorder * GetRecorder(RS_SERVER_INFO_T * serverInfo, UINT nRetryCount=0);
+	HTRecorder * GetRecorder(HTNotificationReceiver * notifier, RS_SERVER_INFO_T * serverInfo, UINT nRetryCount = 0);
 	BOOL MakeDeviceInfo(CString strCameraUuid, RS_DEVICE_INFO_T * rsDeviceInfo);
 
 

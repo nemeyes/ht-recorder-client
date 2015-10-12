@@ -29,6 +29,8 @@ class COutputWnd : public CDockablePane
 public:
 	COutputWnd();
 
+	void AddString2OutputEvent(CString message);
+
 	void UpdateFonts();
 
 // Attributes

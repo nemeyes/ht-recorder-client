@@ -9,7 +9,7 @@
 
 class CMainFrame : public CFrameWndEx
 {
-	
+	friend class CSiteView;
 protected: // create from serialization only
 	CMainFrame();
 	DECLARE_DYNCREATE(CMainFrame)
@@ -38,8 +38,7 @@ protected:  // control bar embedded members
 	CMFCToolBar       m_wndToolBar;
 	CMFCStatusBar     m_wndStatusBar;
 	CMFCToolBarImages m_UserImages;
-	CSiteView         m_wndFileView;
-	//CClassView        m_wndClassView;
+	CSiteView         m_wndSiteView;
 	COutputWnd        m_wndOutput;
 	//CPropertiesWnd    m_wndProperties;
 
