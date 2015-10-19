@@ -86,6 +86,8 @@ public:
 	VOID KillRelayStream(VOID);
 	VOID KillPlayBackStream(VOID);
 
+	BOOL GetDeviceStatus(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, RS_DEVICE_STATUS_SET_T * status);
+
 	BOOL StartRelay(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, CDisplayLib * pVideoView, unsigned char * key, size_t nChannel);
 	BOOL StopRelay(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
 

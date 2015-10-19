@@ -2,17 +2,20 @@
 #include "HTNotificationReceiver.h"
 #include "OutputWnd.h"
 #include "StatusLogDAO.h"
+#include "HTNotificationReceiverFactory.h"
 
 HTNotificationReceiver::HTNotificationReceiver(void)
 	: m_wndEventListWindow(NULL)
 {
-
+	//unsigned int thrdAddr;
+	//m_pollThread = (HANDLE)(::_beginthreadex(NULL, 0, &HTNotificationReceiver::PollProcess, this, 0, &thrdAddr));
 }
 
 HTNotificationReceiver::~HTNotificationReceiver(void)
 {
-
-
+	//m_bPoll = FALSE;
+	//::WaitForSingleObject(m_pollThread, INFINITE);
+	//::CloseHandle(m_pollThread);
 }
 
 void HTNotificationReceiver::SetRecorderAddress(wchar_t * address)
@@ -35,6 +38,35 @@ CWnd* HTNotificationReceiver::GetEventListWindow(void)
 {
 	return m_wndEventListWindow;
 }
+
+/*
+unsigned __stdcall HTNotificationReceiver::PollProcess(VOID * param)
+{
+	HTNotificationReceiver * self = static_cast<HTNotificationReceiver*>(param);
+	self->Poll();
+	return 0;
+}
+
+void HTNotificationReceiver::Poll(void)
+{
+	m_bPoll = TRUE;
+	while (m_bPoll)
+	{
+		if (wcslen(m_strRecorderAddress) > 0)
+		{
+			HTRecorderFactory::GetInstance().StartRelay(&(HTNotificationReceiverFactory::GetInstance()),
+				strRecorderUuid,
+				strRecorderAddress,
+				strRecorderUsername,
+				strRecorderPassword,
+				strCameraUuid,
+				m_pVideoView,
+				key,
+				nChannel);
+		}
+	}
+}
+*/
 
 void HTNotificationReceiver::OnConnectionStop(RS_CONNECTION_STOP_NOTIFICATION_T * notification)
 {

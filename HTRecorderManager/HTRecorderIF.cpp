@@ -86,6 +86,20 @@ BOOL HTRecorderIF::IsRecording(HTNotificationReceiver * notifier, CString strRec
 	return rsRecordingStatusList.recordingStatus[0].isRecording;
 }
 
+BOOL HTRecorderIF::GetDeviceStatus(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, RS_DEVICE_STATUS_SET_T * status)
+{
+	HTRecorder * recorder = GetRecorder(notifier, strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword);
+	if (!recorder)
+		return FALSE;
+	
+	RS_DEVICE_INFO_SET_T devices;// , RS_DEVICE_STATUS_SET_T *deviceStatusList
+	BOOL result = recorder->GetDeviceList(&devices);
+	if (!result)
+		return FALSE;
+
+	return recorder->CheckDeviceStatus(&devices, status);
+}
+
 BOOL HTRecorderIF::StartRelay(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, CDisplayLib * pVideoView, unsigned char * key, size_t nChannel)
 {
 	HTRecorder * recorder = GetRecorder(notifier, strRecorderUuid, strRecorderAddress, strRecorderUsername, strRecorderPassword);
