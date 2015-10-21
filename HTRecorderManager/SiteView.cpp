@@ -172,7 +172,7 @@ void CSiteView::FillSiteView()
 			m_wndSiteView.SetItemData(hTreeRecorder, (DWORD_PTR)m_sites[index]->recorders[recorderIndex]);
 
 
-			HTRecorder * recorder = HTRecorderFactory::GetInstance().GetRecorder(&(HTNotificationReceiverFactory::GetInstance()), 
+			HTRecorder * recorder = HTRecorderFactory::GetInstance().GetRecorder(HTNotificationReceiverFactory::GetInstance().GetNotifier(m_sites[index]->recorders[recorderIndex]->uuid),
 																				 m_sites[index]->recorders[recorderIndex]->uuid, 
 																				 m_sites[index]->recorders[recorderIndex]->address, 
 																				 m_sites[index]->recorders[recorderIndex]->username, 

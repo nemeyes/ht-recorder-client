@@ -10,6 +10,8 @@ public:
 	HTNotificationReceiver(void);
 	~HTNotificationReceiver(void);
 
+	void SetHTRecorder(HTRecorder * recorder);
+
 	void SetRecorderAddress(wchar_t * address);
 	wchar_t * GetRecorderAddress(void);
 
@@ -27,11 +29,14 @@ public:
 	void OnBufferClean(RS_BUFFER_CLEAN_NOTIFICATION_T * notification);
 
 private:
-	//static unsigned __stdcall PollProcess(VOID * self);
-	//void Poll(void);
-	//HANDLE m_pollThread;
-	//BOOL m_bPoll;
+	static unsigned __stdcall PollProcess(VOID * self);
+	void Poll(void);
+	HANDLE m_pollThread;
+	BOOL m_bPoll;
 
 	wchar_t m_strRecorderAddress[100];
 	CWnd * m_wndEventListWindow;
+
+
+	HTRecorder * m_pHTRecorder;
 };

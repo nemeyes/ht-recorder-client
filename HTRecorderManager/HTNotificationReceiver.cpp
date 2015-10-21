@@ -7,15 +7,20 @@
 HTNotificationReceiver::HTNotificationReceiver(void)
 	: m_wndEventListWindow(NULL)
 {
-	//unsigned int thrdAddr;
-	//m_pollThread = (HANDLE)(::_beginthreadex(NULL, 0, &HTNotificationReceiver::PollProcess, this, 0, &thrdAddr));
+	unsigned int thrdAddr;
+	m_pollThread = (HANDLE)(::_beginthreadex(NULL, 0, &HTNotificationReceiver::PollProcess, this, 0, &thrdAddr));
 }
 
 HTNotificationReceiver::~HTNotificationReceiver(void)
 {
-	//m_bPoll = FALSE;
-	//::WaitForSingleObject(m_pollThread, INFINITE);
-	//::CloseHandle(m_pollThread);
+	m_bPoll = FALSE;
+	::WaitForSingleObject(m_pollThread, INFINITE);
+	::CloseHandle(m_pollThread);
+}
+
+void HTNotificationReceiver::SetHTRecorder(HTRecorder * recorder)
+{
+	m_pHTRecorder = recorder;
 }
 
 void HTNotificationReceiver::SetRecorderAddress(wchar_t * address)
@@ -39,7 +44,6 @@ CWnd* HTNotificationReceiver::GetEventListWindow(void)
 	return m_wndEventListWindow;
 }
 
-/*
 unsigned __stdcall HTNotificationReceiver::PollProcess(VOID * param)
 {
 	HTNotificationReceiver * self = static_cast<HTNotificationReceiver*>(param);
@@ -54,19 +58,58 @@ void HTNotificationReceiver::Poll(void)
 	{
 		if (wcslen(m_strRecorderAddress) > 0)
 		{
-			HTRecorderFactory::GetInstance().StartRelay(&(HTNotificationReceiverFactory::GetInstance()),
-				strRecorderUuid,
-				strRecorderAddress,
-				strRecorderUsername,
-				strRecorderPassword,
-				strCameraUuid,
-				m_pVideoView,
-				key,
-				nChannel);
+			RS_DEVICE_INFO_SET_T devices;
+			RS_DEVICE_STATUS_SET_T status;
+			BOOL result = m_pHTRecorder->GetDeviceList(&devices);
+			if (result)
+			{
+				result = m_pHTRecorder->CheckDeviceStatus(&devices, &status);
+				if (result)
+				{
+					//status.validDeviceCount
+					for (int index = 0; index < status.validDeviceCount; index++)
+					{
+						if (status.deviceStatusInfo[index].nIsConnected)
+						{
+							CString strMsg = TEXT("Device");
+							strMsg += TEXT("[");
+							strMsg += devices.deviceInfo[index].GetURL();
+							strMsg += TEXT("] Associated with ");
+							strMsg += GetRecorderAddress();
+							strMsg += TEXT(" Recorder Server is Connected.");
+							if (m_wndEventListWindow)
+								((COutputWnd*)(m_wndEventListWindow))->AddString2OutputEvent(strMsg);
+						}
+						else
+						{
+							CString strMsg = TEXT("Device");
+							strMsg += TEXT("[");
+							strMsg += devices.deviceInfo[index].GetURL();
+							strMsg += TEXT("] Associated with ");
+							strMsg += GetRecorderAddress();
+							strMsg += TEXT(" Recorder Server is Disconnected.");
+							if (m_wndEventListWindow)
+								((COutputWnd*)(m_wndEventListWindow))->AddString2OutputEvent(strMsg);
+						}
+
+						if (status.deviceStatusInfo[index].nIsRecordingError)
+						{
+							CString strMsg = TEXT("Device");
+							strMsg += TEXT("[");
+							strMsg += devices.deviceInfo[index].GetURL();
+							strMsg += TEXT("] Associated with ");
+							strMsg += GetRecorderAddress();
+							strMsg += TEXT(" Recorder Server is Under Recording Error.");
+							if (m_wndEventListWindow)
+								((COutputWnd*)(m_wndEventListWindow))->AddString2OutputEvent(strMsg);
+						}
+					}
+				}
+			}
 		}
+		::Sleep(3000);
 	}
 }
-*/
 
 void HTNotificationReceiver::OnConnectionStop(RS_CONNECTION_STOP_NOTIFICATION_T * notification)
 {

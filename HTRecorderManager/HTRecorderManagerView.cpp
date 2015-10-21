@@ -54,7 +54,7 @@ CHTRecorderManagerView::~CHTRecorderManagerView()
 BOOL CHTRecorderManagerView::StartRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid, unsigned char * key, size_t nChannel)
 {
 	HTRecorderFactory::GetInstance().KillRelayStream();
-	return HTRecorderFactory::GetInstance().StartRelay( &(HTNotificationReceiverFactory::GetInstance()), 
+	return HTRecorderFactory::GetInstance().StartRelay( HTNotificationReceiverFactory::GetInstance().GetNotifier((LPWSTR)(LPCWSTR)strRecorderUuid), 
 														strRecorderUuid, 
 														strRecorderAddress, 
 														strRecorderUsername, 
@@ -67,7 +67,7 @@ BOOL CHTRecorderManagerView::StartRelay(CString strRecorderUuid, CString strReco
 
 BOOL CHTRecorderManagerView::StopRelay(CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid)
 {
-	return HTRecorderFactory::GetInstance().StopRelay( &(HTNotificationReceiverFactory::GetInstance()), 
+	return HTRecorderFactory::GetInstance().StopRelay( HTNotificationReceiverFactory::GetInstance().GetNotifier((LPWSTR)(LPCWSTR)strRecorderUuid),
 													   strRecorderUuid, 
 													   strRecorderAddress, 
 													   strRecorderUsername, 

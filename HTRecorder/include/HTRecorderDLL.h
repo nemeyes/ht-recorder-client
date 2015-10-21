@@ -2182,9 +2182,11 @@ protected:
 	VOID							*_handle;
 };
 
-class AFX_EXT_CLASS INotificationReceiver
+class HTRecorder;
+class AFX_EXT_CLASS INotificationReceiver	
 {
 public:
+	virtual VOID	SetHTRecorder(HTRecorder * recorder)=0;
 	virtual VOID	OnConnectionStop( RS_CONNECTION_STOP_NOTIFICATION_T *notification )=0;
 	virtual VOID	OnRecordingStorageFull( RS_STORAGE_FULL_NOTIFICATION_T *notification )=0;
 	virtual VOID	OnReservedStorageFull( RS_STORAGE_FULL_NOTIFICATION_T *notification )=0;

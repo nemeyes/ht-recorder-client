@@ -168,6 +168,7 @@ HTRecorder::HTRecorder( INotificationReceiver * notifier )
 	, _UUID(NULL)
 	, _notifier(notifier)
 {
+	_notifier->SetHTRecorder(this);
 	_liveSession = Live5_Initialize( MAX_LIVE_CHANNEL, 0 );
 }
 
