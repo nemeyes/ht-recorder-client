@@ -196,34 +196,39 @@ BOOL HTRecorder::Connect( WCHAR *UUID, BOOL bRunAsHTRecorder, WCHAR *address, WC
 		free( _UUID );
 	_UUID = _tcsdup( UUID );
 
-	RS_SERVER_INFO_T			serverInfo;
-	serverInfo.nId				= ServiceCoordinator::Instance().GetServerID();
-	serverInfo.strServerId		= UUID;
-	serverInfo.bEnable			= TRUE;
-	serverInfo.strName			= _T("IntellVMS HTRecorder Service");
-	serverInfo.strAddress		= address;
-	serverInfo.nPort			= DEFAULT_NCSERVICE_PORT;
-	serverInfo.strUserId		= userID;
-	serverInfo.strUserPassword	= userPW;
+	Disconnect();
+
+	//RS_SERVER_INFO_T			serverInfo;
+	_serverInfo.nId				= ServiceCoordinator::Instance().GetServerID();
+	_serverInfo.strServerId = UUID;
+	_serverInfo.bEnable = TRUE;
+	_serverInfo.strName = _T("IntellVMS HTRecorder Service");
+	_serverInfo.strAddress = address;
+	_serverInfo.nPort = DEFAULT_NCSERVICE_PORT;
+	_serverInfo.strUserId = userID;
+	_serverInfo.strUserPassword = userPW;
+	_serverInfo.bRunAsHTRecorder = bRunAsHTRecorder;
+	_serverInfo.fileVersion = fileVersion;
+	_serverInfo.dbVersion = dbVersion;
 	
-	_service = new ServiceCore( serverInfo.nId, serverInfo.strServerId, _liveSession, this );
-	_service->SetAddress( serverInfo.strAddress );
+	_service = new ServiceCore(_serverInfo.nId, _serverInfo.strServerId, _liveSession, this);
+	_service->SetAddress(_serverInfo.strAddress);
 	_service->SetAsyncrousConnection( TRUE );
-	_service->SetPort( serverInfo.nPort );
-	_service->SetUser( serverInfo.strUserId, serverInfo.strUserPassword );
-	if( bRunAsHTRecorder )
+	_service->SetPort(_serverInfo.nPort);
+	_service->SetUser(_serverInfo.strUserId, _serverInfo.strUserPassword);
+	if (_serverInfo.bRunAsHTRecorder)
 		_service->SetProtocol( NAUTILUS_V2_SETUP );
 	else
 		_service->SetProtocol( NAUTILUS_V2 );
 
-	BOOL bConnected = _service->Connect( serverInfo.strAddress, 
-												 serverInfo.nPort, 
-												 serverInfo.strUserId, 
-												 serverInfo.strUserPassword, 
-												 _service->GetProtocol(), 
-												 fileVersion, 
-												 dbVersion, 
-												 _service->IsAsyncrousConnection() );
+	BOOL bConnected = _service->Connect(_serverInfo.strAddress,
+										_serverInfo.nPort,
+										_serverInfo.strUserId,
+										_serverInfo.strUserPassword,
+										_service->GetProtocol(), 
+										_serverInfo.fileVersion,
+										_serverInfo.dbVersion,
+										_service->IsAsyncrousConnection() );
 
 	INT maxTrialCount = 3;
 	if( _service->IsAsyncrousConnection() )
@@ -255,19 +260,85 @@ BOOL HTRecorder::Connect( WCHAR *UUID, BOOL bRunAsHTRecorder, WCHAR *address, WC
 	return bConnected;
 }
 
+BOOL HTRecorder::Reconnect(VOID)
+{
+	Disconnect();
+
+	_service = new ServiceCore(_serverInfo.nId, _serverInfo.strServerId, _liveSession, this);
+	_service->SetAddress(_serverInfo.strAddress);
+	_service->SetAsyncrousConnection(TRUE);
+	_service->SetPort(_serverInfo.nPort);
+	_service->SetUser(_serverInfo.strUserId, _serverInfo.strUserPassword);
+	if (_serverInfo.bRunAsHTRecorder)
+		_service->SetProtocol(NAUTILUS_V2_SETUP);
+	else
+		_service->SetProtocol(NAUTILUS_V2);
+
+	BOOL bConnected = _service->Connect(_serverInfo.strAddress,
+		_serverInfo.nPort,
+		_serverInfo.strUserId,
+		_serverInfo.strUserPassword,
+		_service->GetProtocol(),
+		_serverInfo.fileVersion,
+		_serverInfo.dbVersion,
+		_service->IsAsyncrousConnection());
+
+	INT maxTrialCount = 3;
+	if (_service->IsAsyncrousConnection())
+	{
+		BOOL IsConnecting = _service->IsConnecting();
+		while (IsConnecting && (maxTrialCount>0))
+		{
+			IsConnecting = _service->IsConnecting();
+			bConnected = _service->IsConnected();
+			if (bConnected)
+				break;
+
+			maxTrialCount--;
+			Sleep(1000);
+		}
+		/*
+		while( (_service->IsConnecting()) && (maxTrialCount>0) )
+		{
+		//APP_PUMP_MESSAGE(NULL, 0, 0);
+		maxTrialCount--;
+		Sleep(1000);
+		}
+		bConnected = _service->IsConnected();
+		*/
+	}
+
+	if (!bConnected) 
+		Disconnect();
+
+	return bConnected;
+}
+
 BOOL HTRecorder::Disconnect( VOID )
 {
-	_service->Disconnect();
-	if( _service->IsAsyncrousConnection() )
+	BOOL connected = FALSE;
+	if (_service)
 	{
-		while( _service->IsConnected() )
+		_service->Disconnect();
+		if( _service->IsAsyncrousConnection() )
 		{
-			//APP_PUMP_MESSAGE(NULL, 0, 0);
+			while( _service->IsConnected() )
+			{
+				//APP_PUMP_MESSAGE(NULL, 0, 0);
+				Sleep(10);
+			}
 			Sleep(10);
 		}
-		Sleep(10);
+
+		connected = _service->IsConnected();
+
+		if (_service)
+		{
+			delete _service;
+			_service = NULL;
+		}
 	}
-	return ( !_service->IsConnected() );
+	return (!connected);
 }
 
 BOOL HTRecorder::IsConnected( VOID )

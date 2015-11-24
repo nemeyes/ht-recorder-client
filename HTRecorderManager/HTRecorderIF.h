@@ -80,6 +80,9 @@ public:
 	HTRecorderIF(BOOL bRunAsRecorder = FALSE);
 	~HTRecorderIF(VOID);
 
+	VOID Start(VOID);
+	VOID Stop(VOID);
+
 	HTRecorder * GetRecorder(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, UINT nRetryCount = 0);
 	BOOL IsRecording(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, CString strCameraUuid);
 
@@ -96,6 +99,14 @@ private:
 	BOOL MakeDeviceInfo(CString strCameraUuid, RS_DEVICE_INFO_T * rsDeviceInfo);
 
 
+
+private:
+	static unsigned __stdcall CheckConnectionProc(VOID * param);
+	VOID CheckConnectionStatus(VOID);
+
+private:
+	BOOL m_bRun;
+	HANDLE m_thread;
 	/*
 	BOOL	StartPlayback( RecStreamRequstInfo *vcamInfo );
 	BOOL	StopPlayback( RecStreamRequstInfo *vcamInfo );

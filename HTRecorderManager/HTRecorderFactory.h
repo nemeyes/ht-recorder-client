@@ -7,6 +7,7 @@ public:
 	static HTRecorderIF & GetInstance()
 	{
 		static HTRecorderIF instance(FALSE);
+		instance.Start();
 		return instance;
 	}
 

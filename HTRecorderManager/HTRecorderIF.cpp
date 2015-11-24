@@ -10,12 +10,15 @@ UINT lastDayOfMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 HTRecorderIF::HTRecorderIF(BOOL bRunAsRecorder)
 	: m_bRunAsRecorder(bRunAsRecorder)
+	, m_thread(INVALID_HANDLE_VALUE)
+	, m_bRun(FALSE)
 {
 	//m_notifier = new HTNotificationReceiver();
 }
 
 HTRecorderIF::~HTRecorderIF(VOID)
 {
+	Stop();
 	KillPlayBackStream();
 	KillRelayStream();
 
@@ -52,6 +55,20 @@ HTRecorderIF::~HTRecorderIF(VOID)
 		delete m_pRecTime; 
 		m_pRecTime = NULL;
 	}*/
+}
+
+VOID HTRecorderIF::Start(VOID)
+{
+	unsigned thrdaddr = 0;
+	m_thread = (HANDLE)::_beginthreadex(NULL, 0, HTRecorderIF::CheckConnectionProc, this, 0, &thrdaddr);
+}
+
+VOID HTRecorderIF::Stop(VOID)
+{
+	m_bRun = FALSE;
+	::WaitForSingleObject(m_thread, INFINITE);
+	::CloseHandle(m_thread);
+	m_thread = INVALID_HANDLE_VALUE;
 }
 
 HTRecorder * HTRecorderIF::GetRecorder(HTNotificationReceiver * notifier, CString strRecorderUuid, CString strRecorderAddress, CString strRecorderUsername, CString strRecorderPassword, UINT nRetryCount)
@@ -266,6 +283,36 @@ HTRecorder * HTRecorderIF::GetRecorder(HTNotificationReceiver * notifier, RS_SER
 			TRACE("connect old list fail \n");
 			return NULL;
 		}
+	}
+}
+
+
+unsigned HTRecorderIF::CheckConnectionProc(VOID * param)
+{
+	HTRecorderIF * self = static_cast<HTRecorderIF*>(param);
+	if (self)
+		self->CheckConnectionStatus();
+	return 0;
+}
+
+VOID HTRecorderIF::CheckConnectionStatus(VOID)
+{
+	m_bRun = TRUE;
+	while (m_bRun)
+	{
+		CScopedLock lock(&m_lockRecorder);
+		std::map<CString, HTRecorder*>::iterator iter;
+
+		for (iter = m_mapRecorderList.begin(); iter != m_mapRecorderList.end(); iter++)
+		{
+			HTRecorder* recorder = (*iter).second;
+			BOOL isConnected = recorder->IsConnected();
+			if (!isConnected)
+			{
+				recorder->Reconnect();
+			}
+		}
+		::Sleep(3000);
 	}
 }
 

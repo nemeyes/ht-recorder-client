@@ -2064,6 +2064,9 @@ typedef struct _RS_SERVER_INFO_T
 	CStringW		strUserId;
 	CStringW		strUserPassword;
 	CStringW		strDesc;
+	BOOL			bRunAsHTRecorder;
+	ULONG			fileVersion;
+	ULONG			dbVersion;
 } RS_SERVER_INFO_T;
 
 typedef struct _RS_PLAYBACK_STREAM_INFO_T
@@ -2207,6 +2210,7 @@ public:
 	
 
 	BOOL	Connect( WCHAR *UUID, BOOL bRunAsRecorder=FALSE, WCHAR *address=RS_DEFAULT_SERVICE_ADDRESS, WCHAR *userID=RS_DEFAULT_USER, WCHAR *userPW=RS_DEFAULT_PASSWORD, DWORD dwMaxChannel=1, DWORD dwNumberOfThread=1, ULONG fileVersion=RS_FILE_VERSION, ULONG dbVersion=RS_DB_VERSION );
+	BOOL	Reconnect(VOID);
 	BOOL	Disconnect( VOID );
 	BOOL	IsConnected( VOID );
 	///////////////////////  LOGIN  /////////////////////////
@@ -2296,6 +2300,8 @@ public:
 	VOID	OnBufferClean( RS_BUFFER_CLEAN_NOTIFICATION_T *notification );
 	
 private:
+	RS_SERVER_INFO_T		_serverInfo;
+
 	ServiceCore				*_service;
 	VOID					*_liveSession;
 

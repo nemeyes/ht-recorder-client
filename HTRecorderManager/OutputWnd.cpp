@@ -22,6 +22,7 @@ COutputWnd::COutputWnd()
 
 COutputWnd::~COutputWnd()
 {
+	HTNotificationReceiverFactory::GetInstance().SetEventListWindow(NULL);
 }
 
 BEGIN_MESSAGE_MAP(COutputWnd, CDockablePane)
