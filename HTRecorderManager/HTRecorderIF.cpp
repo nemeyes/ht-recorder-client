@@ -300,11 +300,12 @@ VOID HTRecorderIF::CheckConnectionStatus(VOID)
 	m_bRun = TRUE;
 	while (m_bRun)
 	{
-		CScopedLock lock(&m_lockRecorder);
 		std::map<CString, HTRecorder*>::iterator iter;
 
 		for (iter = m_mapRecorderList.begin(); iter != m_mapRecorderList.end(); iter++)
 		{
+			CScopedLock lock(&m_lockRecorder);
+
 			HTRecorder* recorder = (*iter).second;
 			BOOL isConnected = recorder->IsConnected();
 			if (!isConnected)
